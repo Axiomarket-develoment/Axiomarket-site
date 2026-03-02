@@ -1,9 +1,14 @@
-// next.config.ts
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: "export",
+  trailingSlash: true,
+  // 👈 This enables static export
   devIndicators: {
-    position: "top-right", // move to top right (or top-left / bottom-left / bottom-right)
+    position: "top-right",
+  },
+  images: {
+    unoptimized: true, // 👈 Required for static export when using next/image
   },
 };
 

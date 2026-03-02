@@ -1,57 +1,10 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
 
 html {
-    transition: background-color 0.3s ease, color 0.3s ease;
+  color-scheme: dark;
+  background-color: #0A0A0B;
 }
-
-
-body{
-    overflow-x: hidden;
-}
- /* This tells Tailwind what the actual font names are
-@theme inline {
-    --font-sans: var(--font-inter);
-    --font-mono: var(--font-mono);
-}
-
-
-font-sans {
-    font-family: var(--font-sans)
-} */
-
-:root {
-  --font-body: "Inter", sans-serif;
-  --font-heading: "Poppins", sans-serif;
-}
-
-.font-body {
-  font-family: var(--font-body);
-}
-.font-heading {
-  font-family: var(--font-heading);
-}
-
-/* Move the Next.js dev overlay badge */
-/* Hide the Next.js dev badge in dev mode */
-#__next_dev_overlay_container,
-#__next_dev_overlay_container * {
-  display: none !important;
-}
-
-
-
-/* in globals.css or component's CSS */
-.navbar-curve-shadow::after {
-  content: "";
-  position: absolute;
-  bottom: -10px; /* how far below the bar */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120%;
-  height: 30px; /* height of the curve */
-  border-radius: 50%;
-  box-shadow: 0 10px 20px rgba(0,0,0,0.2);
-  pointer-events: none;
+body {
+  background-color: #0A0A0B;
 }
