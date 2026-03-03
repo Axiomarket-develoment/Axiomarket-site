@@ -6,6 +6,7 @@ import './globals.css'
 import { Inter, Poppins } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import BottomBar from "@/components/BottomBar";
+import { Toaster } from "react-hot-toast";
 
 export const poppins = Poppins({
   weight: ["400"], // or specify the weights you need, e.g. ["400", "700"]
@@ -65,6 +66,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans">
         <main className="">{children}</main> {/* pb-24 adds space for BottomBar */}
 
+
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            style: {
+              background: "#111",
+              color: "#fff",
+              border: "1px solid #222",
+            },
+          }}
+        />
       </body>
     </html>
 
