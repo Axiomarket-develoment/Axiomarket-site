@@ -2,7 +2,7 @@
 import { toast } from "react-hot-toast";
 
 // Update API URL to local host
-// export const API_URL = "http://localhost:5000";
+// export const API_URL = "http://localhost:4000";
 export const API_URL = "https://axiomarket-server.onrender.com";
 
 type ApiOptions = {
@@ -10,6 +10,7 @@ type ApiOptions = {
   body?: Record<string, any>;
   token?: string;
   showSuccess?: boolean;
+  showLoading?: boolean;
 };
 
 type ApiResponse<T = any> = {
@@ -19,12 +20,16 @@ type ApiResponse<T = any> = {
 
 export const apiRequest = async <T = any>(
   endpoint: string,
-  { method = "GET", body, token, showSuccess = false }: ApiOptions = {}
+  { method = "GET", body, token, showSuccess = false, showLoading = true }: ApiOptions = {}
 ): Promise<ApiResponse<T>> => {
-  const toastId = toast.loading("Please wait...");
+
+  const toastId = showLoading ? toast.loading("Please wait...") : null;
 
   try {
-    const authToken = token || localStorage.getItem("auth-token") || localStorage.getItem("token");
+    const authToken =
+      token ||
+      localStorage.getItem("auth-token") ||
+      localStorage.getItem("token");
 
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
@@ -41,10 +46,13 @@ export const apiRequest = async <T = any>(
     });
 
     const data = await response.json();
-    toast.dismiss(toastId);
+
+    if (toastId) toast.dismiss(toastId);
 
     if (!response.ok) {
-      toast.error(data.msg ||data.message || "Something went wrong!");
+      if (showLoading) {
+        toast.error(data.msg || data.message || "Something went wrong!");
+      }
       return { success: false, data };
     }
 
@@ -54,8 +62,10 @@ export const apiRequest = async <T = any>(
 
     return { success: true, data };
   } catch (error) {
-    toast.dismiss(toastId);
-    toast.error("Network error! Please try again.");
+    if (toastId) toast.dismiss(toastId);
+    if (showLoading) {
+      toast.error("Network error! Please try again.");
+    }
     console.error("API Error:", error);
     return { success: false, data: null };
   }

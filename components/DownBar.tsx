@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 type DownBarItem = {
     label: string;
@@ -11,24 +11,29 @@ type DownBarItem = {
 
 const DownBar = () => {
     const router = useRouter();
-    const [active, setActive] = useState<string>("Home");
+    const pathname = usePathname(); // current path
+    const [active, setActive] = useState<string>("");
 
     const downbars: DownBarItem[] = [
         { label: "Market", path: "/market", icon: "/img/downbar/db1.svg" },
         { label: "P2P", path: "/market", icon: "/img/downbar/db2.svg" },
-        { label: "Campaigns", path: "/market", icon: "/img/downbar/db3.svg" },
+        { label: "History", path: "/history", icon: "/img/downbar/db3.svg" },
         { label: "Profile", path: "/market", icon: "/img/downbar/db4.svg" },
     ];
 
+    // Update active based on current pathname
+    useEffect(() => {
+        const match = downbars.find(item => pathname.startsWith(item.path));
+        if (match) setActive(match.label);
+    }, [pathname]);
+
     const handleClick = (item: DownBarItem) => {
-        setActive(item.label);
         router.push(item.path);
+        setActive(item.label);
     };
 
     return (
-        <div className="fixed bottom-12 left-0 w-full flex justify-center md:hidden z-50">
-
-
+        <div className="fixed bottom-8 left-0 w-full flex justify-center md:hidden z-40">
             {/* Gradient border wrapper */}
             <div className="rounded-[40px] p-[1px] bg-[linear-gradient(92.38deg,#FF394A_0%,rgba(96,96,96,0.05)_100%)]">
                 {/* Inner navbar */}
@@ -43,7 +48,7 @@ const DownBar = () => {
                             >
                                 <img src={item.icon} alt={item.label} className="w-5 h-5" />
                                 <span
-                                    className={`text-[#FF394A] transition-all duration-600 overflow-hidden whitespace-nowrap ${isActive ? "max-w-[120px] text-[#FF394A] opacity-100" : "max-w-0 opacity-0"}`}
+                                    className={`text-[#FF394A] transition-all duration-600 overflow-hidden whitespace-nowrap ${isActive ? "max-w-[120px] opacity-100" : "max-w-0 opacity-0"}`}
                                 >
                                     {item.label}
                                 </span>

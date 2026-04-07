@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  output: "export",
+  // output: "export",
   trailingSlash: true,
   // 👈 This enables static export
   devIndicators: {
@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     unoptimized: true, // 👈 Required for static export when using next/image
+    domains: ["api.coingecko.com"], // 👈 Allow loading images from CoinGecko
   },
 };
 

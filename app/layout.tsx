@@ -7,6 +7,7 @@ import { Inter, Poppins } from "next/font/google";
 import Navbar from "@/components/Navbar";
 import BottomBar from "@/components/BottomBar";
 import { Toaster } from "react-hot-toast";
+import { GoogleOAuthProvider } from "@react-oauth/google";
 
 export const poppins = Poppins({
   weight: ["400"], // or specify the weights you need, e.g. ["400", "700"]
@@ -60,13 +61,23 @@ export const metadata: Metadata = {
   }
 };
 
+const GOOGLE_CLIENT_ID = "0981375860-q5ukucpsd99erb6cg06d7ape30urrm5l.apps.googleusercontent.com";
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${inter.className} ${poppins.className}`} suppressHydrationWarning>
+      <head>
+        <script
+          src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"
+          async
+        ></script>
+      </head>
       <body className="font-sans">
-        <main className="">{children}</main> {/* pb-24 adds space for BottomBar */}
-
-
+        <main className="">
+          <GoogleOAuthProvider clientId="60981375860-77ou1knuso3cv50qsn1pmjk0332k220n.apps.googleusercontent.com">
+            {children}
+          </GoogleOAuthProvider>
+        </main>
         <Toaster
           position="top-right"
           toastOptions={{

@@ -3,11 +3,10 @@
 
 html {
   color-scheme: dark;
-  background-color: #0A0A0B;
 }
 
 body {
-  background-color: #0A0A0B;
+  background-color: #050505;
 }
 
 
@@ -38,4 +37,13 @@ body {
 
 .scrollbar-custom::-webkit-scrollbar-thumb:hover {
   background: #FF1F3A;
+}
+
+@keyframes wave {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-wave {
+  animation: wave 1s ease-out forwards;
 }
