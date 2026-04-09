@@ -135,43 +135,56 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
         if (!isCrypto || !market.metadata?.asset) return;
 
         const coinIdRaw = market.metadata.asset;
-        const coinId =
-            coinIdRaw.toLowerCase() === "avalanche"
-                ? "avalanche-2"
-                : coinIdRaw.toLowerCase();
+        const coinId = coinIdRaw.toLowerCase() === "avalanche" ? "avalanche-2" : coinIdRaw.toLowerCase();
 
-        // ✅ get full cache object
+        const LOGO_STORAGE_KEY = "logoCache";
+
+        // Get the existing cache
         const cacheStr = localStorage.getItem(LOGO_STORAGE_KEY);
-        const cache = cacheStr ? JSON.parse(cacheStr) : {};
+        const cache: Record<string, string> = cacheStr ? JSON.parse(cacheStr) : {};
 
-        // ✅ check if already cached
+        // Already cached? Use it
         if (cache[coinId]) {
             setLogo(cache[coinId]);
             setLoading(false);
             return;
         }
 
-        const loadLogo = async () => {
+        let intervalId: NodeJS.Timeout;
+
+        const fetchLogo = async () => {
             try {
                 const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`);
                 const data = await res.json();
 
-                const img = data.image.thumb;
+                if (data?.image?.thumb) {
+                    setLogo(data.image.thumb);
+                    setLoading(false);
 
-                setLogo(img);
+                    // Update cache
+                    const updatedCache = { ...cache, [coinId]: data.image.thumb };
+                    localStorage.setItem(LOGO_STORAGE_KEY, JSON.stringify(updatedCache));
 
-                // ✅ update ONE object
-                const updatedCache = { ...cache, [coinId]: img };
-                localStorage.setItem(LOGO_STORAGE_KEY, JSON.stringify(updatedCache));
-
-            } catch {
-                setLogo(null);
+                    // Stop the retry loop
+                    if (intervalId) clearInterval(intervalId);
+                }
+            } catch (err) {
+                // fail silently, retry will happen automatically
+                console.log("Logo fetch failed, retrying in 3s...");
             }
         };
 
-        loadLogo();
-    }, [isCrypto, market.metadata?.asset]);
+        // Initial fetch
+        fetchLogo();
 
+        // Retry every 3 seconds until successful
+        intervalId = setInterval(fetchLogo, 3000);
+
+        // Clean up on unmount
+        return () => {
+            if (intervalId) clearInterval(intervalId);
+        };
+    }, [isCrypto, market.metadata?.asset]);
 
     useEffect(() => {
         const interval = setInterval(() => {

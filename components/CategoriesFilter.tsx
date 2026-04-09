@@ -62,7 +62,7 @@ const CategoriesFilter: React.FC<Props> = ({
 
 
 
-            <div className="flex scrollbar-custom overflow-x-auto gap-2 pb-2 items-center">
+            <div className="flex scrollbar-custom overflow-x-auto gap-1 pb-2 items-center">
                 {/* Bookmark button */}
                 <div
                     onClick={() => {
@@ -111,7 +111,7 @@ const CategoriesFilter: React.FC<Props> = ({
                             setActiveSubCategory(item);
                             setShowSavedOnly(false); // optional: reset saved filter
                         }}
-                        className={`whitespace-nowrap px-3 py-2.5 text-xs rounded-full transition-all duration-300 transform
+                        className={`whitespace-nowrap px-3 py-2.5 text-sm rounded-full transition-all duration-300 transform
   ${!showSavedOnly && activeSubCategory === item
                                 ? "text-[#E4E4E4] bg-[#0C0C0C] scale-105 font-semibold shadow-md"
                                 : "text-[#8B8B8B] hover:bg-white/20 hover:scale-105"

@@ -65,7 +65,7 @@ const GOOGLE_CLIENT_ID = "0981375860-q5ukucpsd99erb6cg06d7ape30urrm5l.apps.googl
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.className} ${poppins.className}`} suppressHydrationWarning>
+    <html lang="en" className={`font-sf-pro-rounded`} suppressHydrationWarning>
       <head>
         <script
           src="https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js"

@@ -111,6 +111,24 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
     return matchesCategory && matchesSubCategory && matchesSaved;
   });
 
+  const sortedMarkets = filteredMarkets.sort((a, b) => {
+    const now = Date.now();
+
+    const getPriority = (market: Market) => {
+      if (market.status === "SETTLED") return 3; // lowest
+      if (new Date(market.endDate).getTime() < now) return 2; // ended but not settled
+      return 1; // ongoing/live
+    };
+
+    const priorityA = getPriority(a);
+    const priorityB = getPriority(b);
+
+    if (priorityA !== priorityB) return priorityA - priorityB;
+
+    // If same priority, sort by startDate descending (latest first)
+    return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
+  });
+
 
   // 3️⃣ Subscribe to Firestore markets
   useEffect(() => {
@@ -163,7 +181,7 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
         <p className="text-white text-center">No markets available</p>
       ) : (
         <AnimatePresence>
-          {filteredMarkets.map((market, index) => {
+          {sortedMarkets.map((market, index) => {
             const userOrdersForMarket = orders.filter((o) => o.marketId === market._id);
 
             return (
