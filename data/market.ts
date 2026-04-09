@@ -41,13 +41,14 @@ export interface Metadata {
   asset?: string;
   startPrice?: number;
   targetPrice?: number;
+  assetSymbol: string;
   direction?: string;
   assetLogo?: string;   // 👈 ADD THIS
   chartImage?: string;  // 👈 ADD THIS
 }
 
 export interface Market {
-  _id: any;
+  _id: string;
   id: string; // add this
 
   question: string;
@@ -62,6 +63,7 @@ export interface Market {
   tradeCount?: number;
   featured?: boolean;
   category?: string;
+  status: string;
   createdAt?: string;
 }
 

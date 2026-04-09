@@ -1,7 +1,6 @@
-"use client"; // important, because we are using hooks
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+"use client";
 
+import { useEffect, useState } from "react";
 import { CryptoInfo } from "./CryptoInfo";
 import { TradingViewRechart } from "./LiveChart";
 import { MarketFooter } from "./MarketFooter";
@@ -17,17 +16,38 @@ import UserChat from "./ChatRoom";
 
 export default function MarketDetails({ market, logo }: any) {
     const [activeTab, setActiveTab] = useState<Tab>("Chart");
-    const [modalData, setModalData] = useState<{
-        outcome: string | null;
-        odds: number | null;
-        subMarketId?: string;
-    } | null>(null);
+    const [modalData, setModalData] = useState<any>(null);
+    const [userId, setUserId] = useState<string | null>(null); // 👈 ADD THIS
+
+    // ✅ GET USER FROM LOCAL STORAGE
+    useEffect(() => {
+        const userStr = localStorage.getItem("user");
+
+        if (userStr) {
+            try {
+                const user = JSON.parse(userStr);
+                if (user?._id) {
+                    setUserId(user._id);
+                } else {
+                    console.warn("User has no _id");
+                }
+            } catch (err) {
+                console.error("Failed to parse user", err);
+            }
+        }
+    }, []);
 
     const isSport = market.marketType === "SPORT";
     const isCrypto = market.marketType === "CRYPTO";
 
-    const totalVolume = market.subMarkets.reduce((acc: number, sub: any) => acc + sub.totalVolume, 0);
-    const singleSub = market.subMarkets.length === 1 && market.subMarkets[0].question === market.question;
+    const totalVolume = market.subMarkets.reduce(
+        (acc: number, sub: any) => acc + sub.totalVolume,
+        0
+    );
+
+    const singleSub =
+        market.subMarkets.length === 1 &&
+        market.subMarkets[0].question === market.question;
 
     const handleSelectOption = (data: any) => {
         setModalData({ ...data });
@@ -35,29 +55,37 @@ export default function MarketDetails({ market, logo }: any) {
 
     return (
         <div className="space-y-6 px-4 pb-35">
-            {/* Market Header */}
-            <MarketHeader market={market} isCrypto={isCrypto} logo={logo} />
 
-            {/* Crypto chart */}
-            {isCrypto && market.metadata?.asset && <TradingViewRechart coinId={market.metadata.asset} />}
-            {isCrypto && <MarketStats market={market} totalVolume={totalVolume} />}
+            {/* ✅ FIXED HERE */}
+            <MarketHeader
+                market={market}
+                userId={userId}   // 👈 CORRECT USER ID
+                isCrypto={isCrypto}
+                logo={logo}
+            />
 
-            {/* Sticky Tabs */}
-            <div className="sticky top-0 z-50  backdrop-blur-sm pt-2">
+            {isCrypto && market.metadata?.asset && (
+                <TradingViewRechart coinId={market.metadata.asset} />
+            )}
+
+            {isCrypto && (
+                <MarketStats market={market} totalVolume={totalVolume} />
+            )}
+
+            <div className="sticky top-0 z-50 backdrop-blur-sm pt-2">
                 <Tabs activeTab={activeTab} onChange={setActiveTab} />
             </div>
 
-            <div className="sticky top-16 z-50  pt-2 backdrop-blur-sm">
+            <div className="sticky top-16 z-50 pt-2 backdrop-blur-sm">
                 <SubMarkets
                     subMarkets={market.subMarkets}
                     isSport={isSport}
                     singleSub={singleSub}
                     market={market}
-                    onSelectOption={handleSelectOption} // ✅ pass callback
+                    onSelectOption={handleSelectOption}
                 />
             </div>
 
-            {/* Trigger Order Modal */}
             {modalData && (
                 <TriggerOrderModal
                     onClose={() => setModalData(null)}
@@ -69,13 +97,28 @@ export default function MarketDetails({ market, logo }: any) {
                 />
             )}
 
-            {/* Other tab content */}
-            {activeTab === "AI" && <AiInsight market={market} />}
-            {activeTab === "Chat" && <UserChat conversationId={market.conversationId} />}
-            {activeTab === "Chart" && isCrypto && market.metadata && <CryptoInfo market={market} />}
+            <div style={{ display: activeTab === "AI" ? "block" : "none" }}>
+                <AiInsight market={market} />
+            </div>
+
+            {activeTab === "Chat" && (
+                <UserChat conversationId={market.conversationId} />
+            )}
+
+            {activeTab === "Chart" && isCrypto && market.metadata && (
+                <CryptoInfo market={market} />
+            )}
+
             {isSport && <SportTeams event={market.event} />}
-            {market.marketType === "SOCIAL" && <SocialInfo market={market} />}
-            <MarketFooter market={market} totalVolume={totalVolume} isSport={isSport} />
+            {market.marketType === "SOCIAL" && (
+                <SocialInfo market={market} />
+            )}
+
+            <MarketFooter
+                market={market}
+                totalVolume={totalVolume}
+                isSport={isSport}
+            />
         </div>
     );
 }

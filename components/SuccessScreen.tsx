@@ -16,7 +16,7 @@ const SuccessScreen: React.FC<Props> = ({ isOpen, onClose }) => {
     if (isOpen) {
       const timer = setTimeout(() => {
         onClose?.();
-      }, 60000);
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -32,7 +32,7 @@ const SuccessScreen: React.FC<Props> = ({ isOpen, onClose }) => {
           exit={{ opacity: 0 }}
         >
           <motion.div
-            className="bg-[#050505] w-full max-w-md rounded-t-2xl p-8 flex flex-col items-center justify-center"
+            className="bg-[#050505] w-full max-w-md h-screen rounded-t-2xl p-8 flex flex-col items-center justify-center"
             initial={{ y: 200 }}
             animate={{ y: 0 }}
             exit={{ y: 200 }}
@@ -40,25 +40,24 @@ const SuccessScreen: React.FC<Props> = ({ isOpen, onClose }) => {
           >
             <motion.div
               initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4 }}
+              animate={{ scale: [1, 1.1, 1], opacity: 1 }}
+              transition={{ duration: 1, repeat: Infinity, repeatType: "loop" }}
+              className="w-20 h-20 flex items-center justify-center rounded-full border-2 border-red-600 p-1"
             >
               <Image
                 src="/img/logo2.svg"
                 alt="success"
                 width={60}
                 height={60}
-                className="mb-4"
+                className="rounded-full"
               />
             </motion.div>
 
             <p className="text-white font-semibold text-lg">
-              Prediction Placed
+              It's game time
             </p>
 
-            <p className="text-gray-400 text-sm mt-2 text-center">
-              Your position has been successfully entered 🚀
-            </p>
+
           </motion.div>
         </motion.div>
       )}

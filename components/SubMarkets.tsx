@@ -1,3 +1,5 @@
+"use client";
+
 import { toast } from "react-hot-toast";
 
 // Helper to get time left
@@ -15,38 +17,79 @@ const getTimeLeft = (endDate: number | string) => {
   return `${hours}h ${minutes}m ${seconds}s`;
 };
 
-export function SubMarkets({ subMarkets, isSport, singleSub, onSelectOption, market }: any) {
+export function SubMarkets({
+  subMarkets,
+  isSport,
+  singleSub,
+  onSelectOption,
+  market,
+}: any) {
   return (
     <div className="space-y-3 relative z-10">
       {subMarkets.map((sub: any, i: number) => {
-        const oddsValues = sub.outcomes?.map((opt: any) => opt.odds || 0) || [];
-        const maxOdd = Math.max(...oddsValues);
-        const minOdd = Math.min(...oddsValues);
+        // ✅ Calculate liquidity per submarket
+        const totalLiquidity = sub.outcomes?.reduce(
+          (acc: number, o: any) => acc + Number(o.pool || 0),
+          0
+        );
 
         return (
           <div
             key={i}
-            className={`rounded-xl ${
-              isSport ? "flex gap-2" : singleSub ? "flex gap-2" : "flex w-full items-center justify-between"
-            }`}
+            className={`rounded-xl ${isSport
+                ? "flex gap-2"
+                : singleSub
+                  ? "flex gap-2"
+                  : "flex w-full items-center justify-between"
+              }`}
           >
-            {!singleSub && !isSport && <p className="text-sm mb-2">{sub.question}</p>}
+            {!singleSub && !isSport && (
+              <p className="text-sm mb-2">{sub.question}</p>
+            )}
 
-            <div className={`flex w-full ${singleSub || isSport ? "w-full gap-4" : "w-1/2 gap-2"}`}>
+            <div
+              className={`flex w-full ${singleSub || isSport ? "w-full gap-4" : "w-1/2 gap-2"
+                }`}
+            >
               {sub.outcomes?.map((opt: any, j: number) => {
-                const isMax = opt.odds === maxOdd;
-                const isMin = opt.odds === minOdd;
+                const liquidity = Number(opt.liquidity || 0);
+
+                // ✅ Default = 50%
+                let percentage = 50;
+
+                if (totalLiquidity > 0) {
+                  percentage = (liquidity / totalLiquidity) * 100;
+                }
+
+                const formattedPercentage = percentage.toFixed(0);
+
+                // ✅ Determine max/min for coloring
+                const percentages = sub.outcomes.map((o: any) =>
+                  totalLiquidity > 0
+                    ? (Number(o.liquidity || 0) / totalLiquidity) * 100
+                    : 50
+                );
+
+                const max = Math.max(...percentages);
+                const min = Math.min(...percentages);
+
+                const isMax = percentage === max;
+                const isMin = percentage === min;
+
                 const textColor =
-                  maxOdd === minOdd ? "text-white" : isMax ? "text-[#56CD00]" : isMin ? "text-[#FF394A]" : "text-white";
+                  totalLiquidity === 0
+                    ? "text-white"
+                    : isMax
+                      ? "text-[#56CD00]"
+                      : isMin
+                        ? "text-[#FF394A]"
+                        : "text-white";
 
                 const handleClick = (e: React.MouseEvent) => {
                   e.stopPropagation();
 
-                  // Check if market has ended
                   if (getTimeLeft(market.endDate) === "Ended") {
-                    if (typeof window !== "undefined") {
-                      toast("⚠️ Market has ended. You cannot place orders.");
-                    }
+                    toast("⚠️ Market has ended. You cannot place orders.");
                     return;
                   }
 
@@ -60,12 +103,17 @@ export function SubMarkets({ subMarkets, isSport, singleSub, onSelectOption, mar
                 return (
                   <button
                     key={j}
-                    className={`flex-1 flex ${!singleSub ? "w-full" : ""} font-semibold justify-center items-center gap-1 py-4 bg-[#0C0C0C] hover:bg-[#333] transition p-1 rounded-full text-xs ${textColor}`}
                     onClick={handleClick}
+                    className={`flex-1 flex ${!singleSub ? "w-full" : ""
+                      } font-semibold justify-center items-center py-4 bg-[#0C0C0C] hover:bg-[#333] transition rounded-full text-xs ${textColor}`}
                   >
-                    <div>{opt.label}</div>
-                    <p>-</p>
-                    <div>{opt.odds % 1 === 0 ? `${opt.odds}.0` : opt.odds}x</div>
+                    <div className="flex gap-1 items-center">
+                      <span>{opt.label}</span>
+                      <p>-</p>
+                      <span className=" opacity-70">
+                        {formattedPercentage}%
+                      </span>
+                    </div>
                   </button>
                 );
               })}

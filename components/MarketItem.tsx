@@ -3,22 +3,31 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
 import TriggerOrderModal from "./TriggerOrderModal";
-import { Loader2 } from "lucide-react";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
-import toast from "react-hot-toast";
 
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
+import { apiRequest } from "@/utils/apiRequest";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa";
+
+
+import { useRouter } from "next/navigation";
+import SuccessScreen from "./SuccessScreen";
 
 
 type Props = {
     market: Market;
     userOrders: any[];
+    initialSaved?: boolean;
+    onToggleSaved?: (marketId: string, isSaved: boolean) => void;
 };
 
 type Outcome = {
-    label: string | number;
-    odds?: number | string;
+    label: string;
+    odds?: number;
     count?: number;
     liquidity?: number;
+    pool?: number;
+    volume?: number;
 };
 
 
@@ -33,6 +42,7 @@ export const formatCompact = (num: number) => {
 };
 
 
+
 type MarketOption = {
     label: string;
     odds: number;
@@ -40,7 +50,10 @@ type MarketOption = {
 
 
 
-const getTimeLeft = (endDate: string) => {
+const getTimeLeft = (endDate: string, status?: string) => {
+    // 🔥 PRIORITY CHECK
+    if (status === "SETTLED") return "Settled";
+
     const now = new Date().getTime();
     const end = new Date(endDate).getTime();
 
@@ -55,62 +68,124 @@ const getTimeLeft = (endDate: string) => {
     return `${hours}h ${minutes}m ${seconds}s`;
 };
 
-const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
+const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initialSaved = false }) => {
     const [modalOpen, setModalOpen] = useState(false);
 
     // Keep all your original states
     const isSport = market.marketType === "SPORT";
     const isCrypto = market.marketType === "CRYPTO";
 
-    const [timeLeft, setTimeLeft] = useState(getTimeLeft(market.endDate));
-
+    const [timeLeft, setTimeLeft] = useState(
+        getTimeLeft(market.endDate, market.status)
+    );
     const [logo, setLogo] = useState<string | null>(null);
     const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
     const [selectedOdds, setSelectedOdds] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [imgLoading, setImgLoading] = useState(true);
+    const router = useRouter();
+    const [isSaved, setIsSaved] = useState(initialSaved);
+    const [logoCache, setLogoCache] = useState<Record<string, string>>({});
+    const [showSuccess, setShowSuccess] = useState(false);
 
+    const LOGO_STORAGE_KEY = "logoCache";
+
+    const handleSaveClick = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        if (loading) return;
+
+        setLoading(true);
+        const action = isSaved ? "unsave" : "save";
+        const token = localStorage.getItem("token");
+
+        const { success } = await apiRequest(`/user_market/save_market`, {
+            method: "POST",
+            body: { marketId: market._id, action, token }, // ✅ include token in body
+            showLoading: false,
+        });
+
+        if (success) {
+            const newState = !isSaved;
+            setIsSaved(newState);
+
+            onToggleSaved?.(market._id, newState); // 🔥 THIS IS THE KEY
+
+            toast.success(`Market ${action === "save" ? "saved" : "unsaved"} ✅`);
+        }
+
+        else {
+            toast.error("Failed to update saved market ⚠️");
+        }
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        setIsSaved(initialSaved);
+    }, [initialSaved]);
+
+    const handleMarketClick = () => {
+        // Save market to localStorage
+        localStorage.setItem("selectedMarket", JSON.stringify(market));
+
+        // Navigate to details page with _id and logo in query params
+        router.push(`/market/details?_id=${market.id}&logo=${logo || ""}`);
+    };
 
     useEffect(() => {
         if (!isCrypto || !market.metadata?.asset) return;
 
         const coinIdRaw = market.metadata.asset;
-        const coinId = coinIdRaw.toLowerCase() === "avalanche" ? "avalanche-2" : coinIdRaw;
+        const coinId =
+            coinIdRaw.toLowerCase() === "avalanche"
+                ? "avalanche-2"
+                : coinIdRaw.toLowerCase();
 
-        let mounted = true; // prevent state updates after unmount
-        setLoading(true);
+        // ✅ get full cache object
+        const cacheStr = localStorage.getItem(LOGO_STORAGE_KEY);
+        const cache = cacheStr ? JSON.parse(cacheStr) : {};
 
-        fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`)
-            .then(res => {
-                if (!res.ok) throw new Error("Coin not found");
-                return res.json();
-            })
-            .then(data => {
-                if (!mounted) return;
-                setLogo(data.image.thumb);
-            })
-            .catch(() => mounted && setLogo(null))
-            .finally(() => mounted && setLoading(false));
+        // ✅ check if already cached
+        if (cache[coinId]) {
+            setLogo(cache[coinId]);
+            setLoading(false);
+            return;
+        }
 
-        return () => {
-            mounted = false;
+        const loadLogo = async () => {
+            try {
+                const res = await fetch(`https://api.coingecko.com/api/v3/coins/${coinId}`);
+                const data = await res.json();
+
+                const img = data.image.thumb;
+
+                setLogo(img);
+
+                // ✅ update ONE object
+                const updatedCache = { ...cache, [coinId]: img };
+                localStorage.setItem(LOGO_STORAGE_KEY, JSON.stringify(updatedCache));
+
+            } catch {
+                setLogo(null);
+            }
         };
+
+        loadLogo();
     }, [isCrypto, market.metadata?.asset]);
+
 
     useEffect(() => {
         const interval = setInterval(() => {
-            setTimeLeft(getTimeLeft(market.endDate));
-        }, 1000); // update every second
+            setTimeLeft(getTimeLeft(market.endDate, market.status));
+        }, 1000);
 
-        return () => clearInterval(interval); // cleanup on unmount
-    }, [market.endDate]);
+        return () => clearInterval(interval);
+    }, [market.endDate, market.status]);
 
     const totalVolume = market.subMarkets.reduce(
         (acc, sub) => acc + sub.totalVolume,
         0
     );
-    const timeText = getTimeLeft(market.endDate);
-
+    const timeText = getTimeLeft(market.endDate, market.status);
 
     const singleSub =
         market.subMarkets.length === 1 &&
@@ -120,11 +195,19 @@ const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
     const handleOptionClick = (e: React.MouseEvent, outcome: string, odds: number) => {
         e.stopPropagation();
 
+        // 🔒 Check if user is logged in
+        const token = localStorage.getItem("token");
+        const user = localStorage.getItem("user");
+
+        if (!token || !user) {
+            // Not logged in → redirect to /login
+            router.push("/login");
+            return;
+        }
+
         // Check if market ended
         if (getTimeLeft(market.endDate) === "Ended") {
-            // Show toast instead
             if (typeof window !== "undefined") {
-                // Replace with your toast library if you have one
                 toast("⚠️ Market has ended. You cannot place orders.");
             }
             return; // Exit early
@@ -154,12 +237,20 @@ const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
         <>
             {modalOpen && (
                 <TriggerOrderModal
-                    onClose={closeModal}
+                    onClose={() => setModalOpen(false)}
+                    onSuccess={() => setShowSuccess(true)} // ✅ trigger success overlay
                     market={market}
                     logo={logo}
                     outcome={selectedOutcome}
                     odds={selectedOdds}
-                    endDate={market.endDate} // ✅ pass raw endDate instead (better)
+                    endDate={market.endDate}
+                />
+            )}
+
+            {showSuccess && (
+                <SuccessScreen
+                    isOpen={showSuccess}
+                    onClose={() => setShowSuccess(false)}
                 />
             )}
             <div className="relative bg-[#0C0C0C] text-white rounded-2xl p-3 overflow-hidden">
@@ -190,14 +281,13 @@ const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
 
                     {/* QUESTION */}
                     {!isSport && (
-                        <Link href={{
-                            pathname: `/market/${market.id}`,
-                            query: { logo: logo || "" }
-                        }}>
+                        <div onClick={handleMarketClick}>
+
                             <h2 className="text-sm font-semibold mb-3 relative z-10">
                                 {market.question}
                             </h2>
-                        </Link>
+                        </div>
+
                     )}
                 </div>
 
@@ -206,77 +296,68 @@ const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
                     {market.subMarkets.map((sub, i) => {
                         const options: MarketOption[] = sub.outcomes.map((o: Outcome) => ({
                             label: String(o.label),
-                            odds: Number(o.odds ?? 1), // force number
+                            odds: Number(o.odds ?? 1),
                         }));
 
-                        const oddsValues = options.map((opt) => opt.odds ?? 0);
-                        const maxOdd = Math.max(...oddsValues);
-                        const minOdd = Math.min(...oddsValues);
+                        const pools = sub.outcomes.map((o: { pool: any; }) => Number(o.pool || 0));
+                        const totalPool = pools.reduce((a: any, b: any) => a + b, 0);
+
+                        const minPercentage = 35; // minimum visible percent
+
+                        let percentages: number[] = [];
+
+                        if (totalPool === 0) {
+                            // If no liquidity at all, split equally
+                            percentages = new Array(options.length).fill(100 / options.length);
+                        } else {
+                            // Calculate raw percentages
+                            const rawPercentages = pools.map((p: number) => (p / totalPool) * 100);
+
+                            // Count how many are below the minimum
+                            const belowMin = rawPercentages.filter((p: number) => p < minPercentage).length;
+                            const totalExtra = belowMin * minPercentage; // total space these options need
+
+                            const totalAboveMin = rawPercentages
+                                .filter((p: number) => p >= minPercentage)
+                                .reduce((a: any, b: any) => a + b, 0);
+
+                            percentages = rawPercentages.map((p: number) => {
+                                if (p < minPercentage) return minPercentage;
+                                // Scale down the bigger ones to keep total 100
+                                return p - ((p - minPercentage) / totalAboveMin) * totalExtra;
+                            });
+                        }
 
                         return (
-                            <div
-                                key={i}
-                                className={`rounded-xl ${isSport ? "flex gap-2" : singleSub ? "flex gap-2" : "flex w-full items-center justify-between"
-                                    }`}
-                            >
+                            <div key={i} className={`rounded-xl ${isSport ? "flex gap-2" : singleSub ? "flex gap-2" : "flex w-full items-center justify-between"}`}>
                                 {!singleSub && !isSport && <p className="text-sm mb-2">{sub.question}</p>}
 
                                 <div className="flex w-full gap-2">
                                     {options.map((opt, j) => {
-                                        const isMax = opt.odds === maxOdd;
-                                        const isMin = opt.odds === minOdd;
+                                        const percentage = percentages[j];
+                                        const formattedPercentage = percentage.toFixed(0);
+
+                                        const maxPool = Math.max(...pools);
+                                        const minPool = Math.min(...pools);
 
                                         const textColor =
-                                            maxOdd === minOdd
+                                            maxPool === minPool
                                                 ? "text-white"
-                                                : isMax
+                                                : pools[j] === maxPool
                                                     ? "text-[#56CD00]"
-                                                    : isMin
+                                                    : pools[j] === minPool
                                                         ? "text-[#FF394A]"
                                                         : "text-white";
-
-                                        const userOrderForOption = userOrders.find((o) => {
-                                            const orderSubId = o.subMarketId;
-                                            const orderMarketId = o.marketId;
-
-                                            const orderLabel = o.side === "BUY" ? "YES" : o.side === "SELL" ? "NO" : "";
-
-                                            // Normalize both sides to string & uppercase
-                                            if (String(opt.label).toUpperCase() !== orderLabel) return false;
-
-                                            if (orderSubId && sub._id && orderSubId.toString() === sub._id.toString()) return true;
-
-                                            if (orderMarketId && orderMarketId.toString() === market.id.toString()) return true;
-
-                                            return false;
-                                        });
-
-                                        let statusIndicator = null;
-                                        if (userOrderForOption) {
-                                            if (userOrderForOption.status === "OPEN" || userOrderForOption.status === "PARTIAL") {
-                                                statusIndicator = <div className="flex gap-1">
-                                                    {/* <span className="w-2 h-2 bg-[#56CD00] rounded-full animate-pulse"></span> */}
-                                                    <span className="w-2 h-2 bg-[#938e00] rounded-full animate-pulse animation-delay-150"></span>
-                                                    {/* <span className="w-2 h-2 bg-white rounded-full animate-pulse animation-delay-300"></span> */}
-                                                </div>
-
-                                            } else if (userOrderForOption.status === "FILLED") {
-                                                statusIndicator = <div className="ml-2 text-green-400 font-bold">✅</div>;
-                                            }
-                                        }
-
 
                                         return (
                                             <button
                                                 key={j}
                                                 onClick={(e) => handleOptionClick(e, opt.label, opt.odds)}
-                                                className={`flex-1 w-full flex ${!singleSub ? "w-full" : ""} font-semibold justify-center items-center gap-1 py-4 bg-[#222] hover:bg-[#333] transition p-1 rounded-md text-xs ${textColor} relative z-20`}
+                                                className={`flex-1 w-full flex justify-center items-center gap-1 py-4 bg-[#222] hover:bg-[#333] transition p-1 rounded-md text-xs ${textColor} relative z-20`}
                                             >
                                                 <div>{opt.label}</div>
                                                 <p>-</p>
-                                                <div>{opt.odds % 1 === 0 ? `${opt.odds}.0` : opt.odds}x</div>
-                                                {/* {statusIndicator && <div className="absolute right-2 top-2">{statusIndicator}</div>} */}
-
+                                                <span className="opacity-70">{formattedPercentage}%</span>
                                             </button>
                                         );
                                     })}
@@ -286,40 +367,43 @@ const MarketItem: React.FC<Props> = ({ market, userOrders }) => {
                     })}
                 </div>
 
-
-
-
                 {/* FOOTER */}
-                <Link href={{
-                    pathname: `/market/${market.id}`,
-                    query: { logo: logo || "" }
-                }}>
-                    <div className="flex item-center mb-4 justify-between text-xs text-[#8B8B8B] relative z-10">
-                        <div className="flex my-4 gap-2 -mb-2 item-center">
-                            <Image
-                                src={"/img/market/total.svg"}
-                                className="w-6 -mt-2"
-                                alt=""
-                                width={100}
-                                height={100}
-                            />
-                            {/* Total trades across all subMarkets */}
-                            <p>{totalTrades}</p>
-                            <p>${formatCompact(totalVolume)}</p>
-                        </div>
 
-                        <div className="flex mt-4 gap-2 -mb-2 items-center">
-                            <p>{timeText === "Ended" ? "Ended" : `Ends in ${timeText}`}</p>
-                            <Image
-                                src="/img/market/save.svg"
-                                className="w-6"
-                                alt=""
-                                width={100}
-                                height={100}
-                            />
-                        </div>
+                <div className="flex item-center mb-4 justify-between text-xs text-[#8B8B8B] relative z-10">
+                    <div className="flex my-4 gap-2 -mb-2 item-center">
+                        <Image
+                            src={"/img/market/total.svg"}
+                            className="w-6 -mt-2"
+                            alt=""
+                            width={100}
+                            height={100}
+                        />
+                        {/* Total trades across all subMarkets */}
+                        <p>{totalTrades}</p>
+                        <p>${formatCompact(totalVolume)}</p>
                     </div>
-                </Link>
+
+                    <div className="flex mt-4 gap-2 -mb-2 items-center">
+                        <p>
+                            {timeText === "Settled"
+                                ? "Settled"
+                                : timeText === "Ended"
+                                    ? "Ended"
+                                    : `Ends in ${timeText}`}
+                        </p>
+                        <motion.div
+                            className="cursor-pointer w-6 h-6 flex items-center justify-center text-gray-600"
+                            onClick={handleSaveClick}
+                            whileTap={{ scale: 0.8 }}
+                            whileHover={{ scale: 1.2 }}
+                            animate={{ rotate: isSaved ? 360 : 0, scale: isSaved ? 1.2 : 1 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                        >
+                            {isSaved ? <FaBookmark size={15} color="#C8C8C8" /> : <FaRegBookmark size={16} color="#C8C8C8" />}
+                        </motion.div>
+                    </div>
+                </div>
+
             </div>
         </>
     );

@@ -11,6 +11,7 @@ import { setLocalStorage } from "@/utils/localStorage";
 interface Props {
     onClose?: () => void;
     market: Market;
+    onSuccess?: () => void;
     logo?: string | null;
     outcome?: string | null;
     odds?: number | null;
@@ -41,11 +42,12 @@ const getTimeLeft = (endDate: string) => {
     return `${seconds}s`;
 };
 
-const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, odds, endDate }) => {
+const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, odds, endDate , onSuccess}) => {
     const [amount, setAmount] = useState<number | "">("");
     const [showWave, setShowWave] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
 
+    const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
     const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
 
     useEffect(() => {
@@ -60,7 +62,9 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
 
 
     const handleSubmit = async () => {
-        if (showWave) return;
+        if (status === "loading") return;
+
+        setShowWave(true);
 
         const token = localStorage.getItem("token") || "";
         const cachedBalance = Number(localStorage.getItem("cachedBalance") || 0);
@@ -80,15 +84,11 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
             return;
         }
 
-        setShowWave(true);
+        setShowWave(false);
+        setStatus("loading");
 
         try {
             const usdAmount = await convertBalanceToUSD(amount);
-
-            console.log({
-                inputAmount: amount,
-                usdAmount
-            });
 
             const response = await apiRequest("/user_market/user_enter_market", {
                 method: "POST",
@@ -98,31 +98,39 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
                     subMarketId: market.subMarkets[0].id,
                     outcome,
                     price: odds,
-                    amount: usdAmount, // send USD
+                    amount: usdAmount,
                 },
-                showSuccess: true,
             });
 
-            setTimeout(() => {
-                setShowWave(false);
-                if (response.success) {
-                    const user = response.data.user;
-                    setLocalStorage("cachedBalance", user.balance.testnet);
-                    setLocalStorage("user", user);
+            if (response.success) {
+                setLocalStorage("cachedBalance", response.data.user.balance.testnet);
+                setLocalStorage("user", response.data.user);
 
-                    setShowSuccess(true);
+                setStatus("success");
+
+                // 🚀 trigger the external overlay
+                onSuccess?.();
+
+                setTimeout(() => {
                     onClose?.();
-                }
-            }, 1000);
+                    setStatus("idle");
+                }, 2000);
+            }
+            else {
+                setStatus("idle");
+            }
+
         } catch (err) {
             console.error(err);
-            setShowWave(false);
+            setStatus("idle");
         }
     };
+
+
     return (
         <AnimatePresence>
             <motion.div
-                className="h-[100vh] w-full bg-black/20 backdrop-blur-xs fixed top-0 left-0 z-50 flex justify-center items-end md:items-center"
+                className="h-[100dvh] w-full bg-black/20 backdrop-blur-xs fixed top-0 left-0 z-50 flex justify-center items-end md:items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -186,7 +194,7 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
                                 <div className="absolute top-0 left-0 w-full h-full bg-[#000000] opacity-50 animate-wave"></div>
                             )}
                             <p className="text-[#FF394A] text-sm font-semibold whitespace-nowrap z-10">
-                                Ave It
+                                Axe It
                             </p>
                             <Image width={20} alt="" height={20} src={"/img/logo2.svg"} className="z-10" />
                         </div>
@@ -198,6 +206,42 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
 
                 </motion.div>
             </motion.div>
+
+
+            <AnimatePresence>
+                {status === "success" && (
+                    <motion.div
+                        className="absolute inset-0 bg-[#050505] flex flex-col items-center justify-center rounded-2xl"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            initial={{ scale: 0.6, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            transition={{ duration: 0.4 }}
+                        >
+                            <Image
+                                src="/img/logo2.svg"
+                                alt="success"
+                                width={60}
+                                height={60}
+                                className="mb-4"
+                            />
+                        </motion.div>
+
+                        <p className="text-white font-semibold text-lg">
+                            Prediction Placed
+                        </p>
+
+                        <p className="text-gray-400 text-sm mt-2 text-center">
+                            Your position has been successfully entered 🚀
+                        </p>
+                    </motion.div>
+                )}
+
+
+            </AnimatePresence>
         </AnimatePresence>
     );
 };

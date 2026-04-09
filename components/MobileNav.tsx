@@ -12,72 +12,69 @@ const MobileNav = () => {
   const router = useRouter();
   const isMarketPage = pathname === "/market/";
 
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
+  const cachedBalance = typeof window !== "undefined" ? localStorage.getItem("cachedBalance") : null;
+
   const [mounted, setMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [userBalance, setUserBalance] = useState("0.0");
+  const [isLoggedIn, setIsLoggedIn] = useState(!!token && !!userStr);
+  const [userBalance, setUserBalance] = useState<string | null>(null);
 
   useEffect(() => {
-    let unsubscribe = null;
-
-    const token = localStorage.getItem("token");
-    const user = localStorage.getItem("user");
-
-    // ✅ Always mark mounted
     setMounted(true);
 
-    if (token && user) {
-      try {
-        const parsedUser = JSON.parse(user);
-        setIsLoggedIn(true);
+    if (!token || !userStr) {
+      setIsLoggedIn(false);
+      setUserBalance("0.0");
+      return;
+    }
 
-        const userId = parsedUser._id;
+    try {
+      const parsedUser = JSON.parse(userStr);
+      const userId = parsedUser?._id; // ✅ use 'id' not '_id'
 
-        // ✅ Show cached instantly (fast UX)
-        const cached = localStorage.getItem("cachedBalance");
-        if (cached) setUserBalance(cached);
-
-        // 🔥 Firestore realtime listener
-        unsubscribe = onSnapshot(
-          doc(db, "users", userId),
-          async (docSnap) => {
-            if (docSnap.exists()) {
-              const data = docSnap.data();
-
-              const rawBalance = data?.balance?.testnet || 0;
-
-              // ✅ Convert to AVAX
-              const avaxValue = await convertUSDToAvax(rawBalance);
-              const formatted = formatBalance(avaxValue);
-
-              setUserBalance(formatted);
-
-              // cache it
-              localStorage.setItem("cachedBalance", formatted);
-            }
-          }
-        );
-      } catch (err) {
-        console.error("Failed to parse user:", err);
+      if (!userId) {
+        console.warn("No user ID found in localStorage user object");
+        setIsLoggedIn(false);
+        setUserBalance("0.0");
+        return;
       }
-    } else {
+
+      setIsLoggedIn(true);
+
+      const userDocRef = doc(db, "users", userId);
+      const unsubscribe = onSnapshot(userDocRef, async (docSnap) => {
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const rawBalance = data?.balance?.testnet;
+
+          if (rawBalance !== undefined && rawBalance !== null) {
+            const avaxValue = await convertUSDToAvax(rawBalance);
+            const formatted = formatBalance(avaxValue);
+
+            setUserBalance(formatted);
+            localStorage.setItem("cachedBalance", formatted);
+          }
+          // if Firestore balance missing, keep previous balance
+        }
+      });
+
+      return () => unsubscribe();
+    } catch (err) {
+      console.error("Failed to parse user:", err);
       setIsLoggedIn(false);
       setUserBalance("0.0");
     }
-
-    // ✅ Proper cleanup
-    return () => {
-      if (unsubscribe) unsubscribe();
-    };
-  }, []);
+  }, [token, userStr]);
 
   return (
-    <div className="flex justify-between items-center w-full p-4">
+    <div className="flex justify-between items-center w-full p-4 ">
       {isMarketPage ? (
-        <Image width={100} height={100} alt="" src="/img/market/logofull.svg" />
+        <Image width={100} height={100} className="w-32" alt="Market Logo" src="/img/market/logofull.svg" />
       ) : (
         <button
           onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm font-medium"
+          className="flex items-center gap-2 text-sm font-medium text-white"
         >
           <span>←</span>
           <span>Back</span>
@@ -85,7 +82,7 @@ const MobileNav = () => {
       )}
 
       <div
-        className="px-2 py-1 gap-2 flex items-center rounded-full text-sm font-medium cursor-pointer"
+        className="px-3 py-1 gap-2 flex items-center rounded-full text-sm font-medium cursor-pointer"
         style={{
           border: "1px solid transparent",
           background:
@@ -95,12 +92,12 @@ const MobileNav = () => {
           if (mounted && !isLoggedIn) router.push("/login");
         }}
       >
-        {!mounted ? (
+        {!mounted || userBalance === null ? (
           <div className="w-16 h-4 bg-gray-700 animate-pulse rounded" />
         ) : isLoggedIn ? (
           <>
-            <Image width={20} height={20} alt="" src="/img/market/avax.svg" />
-            <p className="text-sm font-light">{userBalance}</p>
+            <Image width={20} height={20} alt="AVAX" src="/img/market/avax.svg" />
+            <p className="text-sm font-light text-white">{userBalance}</p>
           </>
         ) : (
           <p className="text-sm font-semibold px-2 text-white">Login</p>

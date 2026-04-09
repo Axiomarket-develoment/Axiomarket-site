@@ -1,7 +1,6 @@
-// app/market/MarketClient.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import CategoriesFilter from "@/components/CategoriesFilter";
 import DownBar from "@/components/DownBar";
@@ -13,6 +12,10 @@ export default function MarketClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
+  const [activeCategory, setActiveCategory] = useState("Trending"); // Filter 1
+  const [activeSubCategory, setActiveSubCategory] = useState("All Markets"); // Filter 2
+  const [showSavedOnly, setShowSavedOnly] = useState(false);
+
   useEffect(() => {
     const token = searchParams.get("token");
     const user = searchParams.get("user");
@@ -20,10 +23,8 @@ export default function MarketClient() {
     if (token && user) {
       try {
         const decodedUser = JSON.parse(atob(decodeURIComponent(user)));
-
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(decodedUser));
-
         router.replace("/market");
       } catch (err) {
         console.error("Failed to decode user:", err);
@@ -45,8 +46,19 @@ export default function MarketClient() {
       </div>
       <div className="relative z-20 flex flex-col min-h-[60px]">
         <MobileNav />
-        <CategoriesFilter />
-        <Markets />
+        <CategoriesFilter
+          activeCategory={activeCategory}
+          setActiveCategory={setActiveCategory}
+          activeSubCategory={activeSubCategory}
+          setActiveSubCategory={setActiveSubCategory}
+          showSavedOnly={showSavedOnly}
+          setShowSavedOnly={setShowSavedOnly}
+        />
+        <Markets
+          activeCategory={activeCategory}
+          activeSubCategory={activeSubCategory}
+          showSavedOnly={showSavedOnly} // pass it here
+        />
         <DownBar />
       </div>
     </div>

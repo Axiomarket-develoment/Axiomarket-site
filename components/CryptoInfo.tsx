@@ -6,7 +6,7 @@ export function CryptoInfo({ market }: { market: any }) {
     
     return (
         <div className="text-xs text-[#8B8B8B] gap-8 justify-between item-center space-y-1 flex">
-            <div className="flex text-sm gap-8">
+            <div className="flex items-center  gap-8">
                 <div>
                     <p>Target Price</p>
                     <p className="text-">${market.metadata.startPrice}</p>

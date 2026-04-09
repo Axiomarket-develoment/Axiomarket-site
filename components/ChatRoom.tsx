@@ -226,7 +226,7 @@ const UserChat: React.FC<UserChatProps> = ({ conversationId }) => {
 
     return (
         <motion.div
-            className="flex flex-col rounded-xl max-h-[68vh]  bg-[#0C0C0C]"
+            className="flex flex-col rounded-xl min-h-[60vh] max-h-[68vh]  bg-[#0C0C0C]"
             initial="hidden"
             animate="visible"
             exit="exit"

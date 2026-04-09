@@ -5,41 +5,81 @@ import MarketItem from "./MarketItem";
 import { Market } from "@/data/market";
 import { MarketSkeleton } from "./skeletons/MarketSkeleton";
 import { db } from "@/lib/firebaseClient";
-import { collection, query, orderBy, onSnapshot, where } from "firebase/firestore";
+import { collection, query, orderBy, onSnapshot, where, doc } from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "markets";
 
-const Markets = () => {
+interface MarketsProps {
+  activeCategory: string;
+  activeSubCategory: string;
+  showSavedOnly: boolean;
+}
+
+const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, showSavedOnly }) => {
   const [markets, setMarkets] = useState<Market[]>([]);
-  const [loading, setLoading] = useState(true);
   const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
+  const [savedMarkets, setSavedMarkets] = useState<string[]>([]);
+
+  const handleToggleSaved = (marketId: string, isNowSaved: boolean) => {
+    setSavedMarkets((prev) => {
+      if (isNowSaved) return [...prev, marketId];
+      return prev.filter((id) => id !== marketId);
+    });
+  };
 
   useEffect(() => {
-    // 0️⃣ Get userId from localStorage
+    if (!userId) return;
+
+    const userRef = doc(db, "users", userId);
+
+    const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        setSavedMarkets(data.savedMarkets || []);
+      }
+    });
+
+    return () => unsubscribeUser();
+  }, [userId]);
+
+  // 0️⃣ Load user from localStorage synchronously
+  useEffect(() => {
     const userStr = localStorage.getItem("user");
     if (userStr) {
       try {
-        const user = JSON.parse(userStr);
-        setUserId(user._id); // MongoDB uses _id
+        const parsedUser = JSON.parse(userStr);
+        if (parsedUser?._id) {
+          setUserId(parsedUser._id);
+        } else {
+          console.warn("User object missing _id:", parsedUser);
+        }
       } catch (err) {
         console.error("Failed to parse user from localStorage:", err);
       }
     }
+  }, []);
 
-    // 1️⃣ Load cached markets
+  // 1️⃣ Load cached markets immediately for fast UX
+  useEffect(() => {
     const cached = localStorage.getItem(STORAGE_KEY);
     if (cached) {
-      setMarkets(JSON.parse(cached));
-      setLoading(false);
+      try {
+        const parsedMarkets = JSON.parse(cached);
+        setMarkets(parsedMarkets);
+        setLoading(false);
+      } catch (err) {
+        console.error("Failed to parse cached markets:", err);
+      }
     }
   }, []);
 
+  // 2️⃣ Subscribe to Firestore orders for the user (only if userId exists)
   useEffect(() => {
-    if (!userId) return; // wait until we have userId
+    if (!userId) return;
 
-    // 2️⃣ Subscribe to Firestore orders for this user
     const ordersQuery = query(
       collection(db, "orders"),
       where("userId", "==", userId)
@@ -50,14 +90,51 @@ const Markets = () => {
       setOrders(data);
     });
 
-    // 3️⃣ Subscribe to Firestore markets
+    return () => {
+      unsubscribeOrders();
+    };
+  }, [userId]);
+
+
+  const filteredMarkets = markets.filter((market) => {
+    const matchesCategory =
+      activeCategory === "Trending" ||
+      (market.marketType && market.marketType.toLowerCase() === activeCategory.toLowerCase());
+
+    const matchesSubCategory =
+      activeSubCategory === "All Markets" ||
+      (market.metadata?.assetSymbol &&
+        market.metadata.assetSymbol.toLowerCase() === activeSubCategory.toLowerCase());
+
+    const matchesSaved =
+      !showSavedOnly || savedMarkets.includes(market._id);
+    return matchesCategory && matchesSubCategory && matchesSaved;
+  });
+
+
+  // 3️⃣ Subscribe to Firestore markets
+  useEffect(() => {
     const marketsQuery = query(collection(db, "markets"), orderBy("createdAt", "desc"));
+
     const unsubscribeMarkets = onSnapshot(marketsQuery, (snapshot) => {
-      const liveMarkets = snapshot.docs.map((doc) => {
-        const { _id, ...rest } = doc.data() as Market; // remove _id from doc.data()
+      const liveMarkets: Market[] = snapshot.docs.map((doc) => {
+        const data = doc.data() as Partial<Omit<Market, "_id" | "id">>; // allow partial
         return {
-          _id: doc.id, // use Firestore document ID
-          ...rest
+          _id: doc.id,
+          id: doc.id, // also set `id`
+          question: data.question || "",
+          marketType: data.marketType as Market["marketType"] || "CRYPTO",
+          subMarkets: data.subMarkets || [],
+          startDate: data.startDate || "",
+          endDate: data.endDate || "",
+          durationMinutes: data.durationMinutes || 0,
+          metadata: data.metadata,
+          status: data.status || "PENDING",
+          totalVolume: data.totalVolume || 0,
+          tradeCount: data.tradeCount || 0,
+          featured: data.featured,
+          category: data.category,
+          createdAt: data.createdAt,
         };
       });
       setMarkets(liveMarkets);
@@ -66,10 +143,9 @@ const Markets = () => {
     });
 
     return () => {
-      unsubscribeOrders();
       unsubscribeMarkets();
     };
-  }, [userId]);
+  }, []);
 
   if (loading && markets.length === 0) {
     return (
@@ -87,10 +163,8 @@ const Markets = () => {
         <p className="text-white text-center">No markets available</p>
       ) : (
         <AnimatePresence>
-          {markets.map((market, index) => {
+          {filteredMarkets.map((market, index) => {
             const userOrdersForMarket = orders.filter((o) => o.marketId === market._id);
-
-            // console.log("📝 Orders for market:", market._id, userOrdersForMarket); // ← LOG HERE
 
             return (
               <motion.div
@@ -103,6 +177,8 @@ const Markets = () => {
                 <MarketItem
                   market={market}
                   userOrders={userOrdersForMarket}
+                  initialSaved={savedMarkets.includes(market._id)}
+                  onToggleSaved={handleToggleSaved}
                 />
               </motion.div>
             );
