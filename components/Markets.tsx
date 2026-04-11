@@ -10,6 +10,10 @@ import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "markets";
 
+function shuffleArray(array: Market[]) {
+  return [...array].sort(() => Math.random() - 0.5);
+}
+
 interface MarketsProps {
   activeCategory: string;
   activeSubCategory: string;
@@ -22,6 +26,7 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [savedMarkets, setSavedMarkets] = useState<string[]>([]);
+
 
   const handleToggleSaved = (marketId: string, isNowSaved: boolean) => {
     setSavedMarkets((prev) => {
@@ -96,43 +101,42 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
   }, [userId]);
 
 
-  const filteredMarkets = markets.filter((market) => {
-    const matchesCategory =
-      activeCategory === "Trending" ||
-      (market.marketType && market.marketType.toLowerCase() === activeCategory.toLowerCase());
-
-    const matchesSubCategory =
-      activeSubCategory === "All Markets" ||
-      (market.metadata?.assetSymbol &&
-        market.metadata.assetSymbol.toLowerCase() === activeSubCategory.toLowerCase());
-
-    const matchesSaved =
-      !showSavedOnly || savedMarkets.includes(market._id);
-    return matchesCategory && matchesSubCategory && matchesSaved;
-  });
-
-  const sortedMarkets = filteredMarkets.sort((a, b) => {
+  const finalMarkets = React.useMemo(() => {
     const now = Date.now();
 
-    const getPriority = (market: Market) => {
-      if (market.status === "SETTLED") return 3; // lowest
-      if (new Date(market.endDate).getTime() < now) return 2; // ended but not settled
-      return 1; // ongoing/live
-    };
+    const filtered = markets.filter((market) => {
+      const matchesSearch =
+        activeSubCategory === "All Markets"
+          ? true
+          : market.question?.toLowerCase().includes(activeSubCategory.toLowerCase()) ||
+          market.metadata?.assetSymbol?.toLowerCase().includes(activeSubCategory.toLowerCase());
 
-    const priorityA = getPriority(a);
-    const priorityB = getPriority(b);
+      const isSettled = market.status === "SETTLED";
+      if (isSettled) return false;
 
-    if (priorityA !== priorityB) return priorityA - priorityB;
+      const matchesCategory =
+        activeCategory === "Trending" ||
+        market.marketType?.toLowerCase() === activeCategory.toLowerCase();
 
-    // If same priority, sort by startDate descending (latest first)
-    return new Date(b.startDate).getTime() - new Date(a.startDate).getTime();
-  });
+      const matchesSaved =
+        !showSavedOnly || savedMarkets.includes(market._id);
+
+      return matchesCategory && matchesSearch && matchesSaved;
+    });
+
+    return filtered.sort((a, b) => {
+      const getPriority = (m: Market) =>
+        new Date(m.endDate).getTime() < now ? 2 : 1;
+
+      return getPriority(a) - getPriority(b);
+    });
+  }, [markets, activeCategory, activeSubCategory, showSavedOnly, savedMarkets]);
+
 
 
   // 3️⃣ Subscribe to Firestore markets
   useEffect(() => {
-    const marketsQuery = query(collection(db, "markets"), orderBy("createdAt", "desc"));
+    const marketsQuery = query(collection(db, "markets"), orderBy("createdAt", "desc"),);
 
     const unsubscribeMarkets = onSnapshot(marketsQuery, (snapshot) => {
       const liveMarkets: Market[] = snapshot.docs.map((doc) => {
@@ -141,9 +145,19 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
           _id: doc.id,
           id: doc.id, // also set `id`
           question: data.question || "",
+          conversationId: data.conversationId || "",
           marketType: data.marketType as Market["marketType"] || "CRYPTO",
-          subMarkets: data.subMarkets || [],
-          startDate: data.startDate || "",
+          subMarkets: (data.subMarkets || []).map((sub: any) => ({
+            ...sub,
+            outcomes: (sub.outcomes || []).map((o: any) => ({
+              label: o.label || "",
+              liquidity: o.liquidity || 0,
+              volume: o.volume || 0,
+              count: o.count || 0,
+              odds: o.odds || 1,
+              result: o.result ?? null,
+            })),
+          })), startDate: data.startDate || "",
           endDate: data.endDate || "",
           durationMinutes: data.durationMinutes || 0,
           metadata: data.metadata,
@@ -152,7 +166,7 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
           tradeCount: data.tradeCount || 0,
           featured: data.featured,
           category: data.category,
-          createdAt: data.createdAt,
+          createdAt: data.createdAt || "",
         };
       });
       setMarkets(liveMarkets);
@@ -181,7 +195,7 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
         <p className="text-white text-center">No markets available</p>
       ) : (
         <AnimatePresence>
-          {sortedMarkets.map((market, index) => {
+          {finalMarkets.map((market, index) => {
             const userOrdersForMarket = orders.filter((o) => o.marketId === market._id);
 
             return (

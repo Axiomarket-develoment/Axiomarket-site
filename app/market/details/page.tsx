@@ -3,7 +3,10 @@ import MarketPage from "./MarketDetailsPage";
 
 export default function Page() {
   return (
-    <Suspense fallback={<div>Loading…</div>}>
+    <Suspense fallback={<div>
+      
+
+    </div>}>
       <MarketPage/>
     </Suspense>
   );

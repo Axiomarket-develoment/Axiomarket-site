@@ -3,7 +3,6 @@
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { convertUSDToAvax, formatBalance } from "@/utils/getAvaxPrice";
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
 
@@ -12,73 +11,71 @@ const MobileNav = () => {
   const router = useRouter();
   const isMarketPage = pathname === "/market/";
 
-  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const userStr = typeof window !== "undefined" ? localStorage.getItem("user") : null;
-  const cachedBalance = typeof window !== "undefined" ? localStorage.getItem("cachedBalance") : null;
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+  const userStr =
+    typeof window !== "undefined" ? localStorage.getItem("user") : null;
 
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!token && !!userStr);
-  const [userBalance, setUserBalance] = useState<string | null>(null);
+  const [avaxBalance, setAvaxBalance] = useState<string>("0.0");
 
   useEffect(() => {
     setMounted(true);
 
     if (!token || !userStr) {
       setIsLoggedIn(false);
-      setUserBalance("0.0");
       return;
     }
 
     try {
-      const parsedUser = JSON.parse(userStr);
-      const userId = parsedUser?._id; // ✅ use 'id' not '_id'
+      const user = JSON.parse(userStr);
+      const userId = user?._id;
 
       if (!userId) {
-        console.warn("No user ID found in localStorage user object");
         setIsLoggedIn(false);
-        setUserBalance("0.0");
         return;
       }
 
       setIsLoggedIn(true);
 
-      const userDocRef = doc(db, "users", userId);
-      const unsubscribe = onSnapshot(userDocRef, async (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const rawBalance = data?.balance?.testnet;
+      const ref = doc(db, "users", userId);
 
-          if (rawBalance !== undefined && rawBalance !== null) {
-            const avaxValue = await convertUSDToAvax(rawBalance);
-            const formatted = formatBalance(avaxValue);
+      const unsubscribe = onSnapshot(ref, (snap) => {
+        if (snap.exists()) {
+          const data = snap.data();
 
-            setUserBalance(formatted);
-            localStorage.setItem("cachedBalance", formatted);
-          }
-          // if Firestore balance missing, keep previous balance
+          // ✅ THIS IS NOW ALREADY CONVERTED BY BACKEND
+          setAvaxBalance(data?.avaxBalance ?? "0.0");
         }
       });
 
       return () => unsubscribe();
     } catch (err) {
-      console.error("Failed to parse user:", err);
+      console.error("User parse error:", err);
       setIsLoggedIn(false);
-      setUserBalance("0.0");
     }
   }, [token, userStr]);
 
   return (
-    <div className="flex justify-between items-center w-full p-4 ">
+    <div className="flex justify-between items-center w-full p-4">
       {isMarketPage ? (
-        <Image width={100} height={100} className="w-32" alt="Market Logo" src="/img/market/logofull.svg" />
+        <Image
+          width={100}
+          height={100}
+          className="w-32"
+          alt="Market Logo"
+          src="/img/market/logofull.svg"
+        />
       ) : (
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-sm font-medium text-white"
-        >
-          <span>←</span>
-          <span>Back</span>
-        </button>
+         <Image
+          width={100}
+          height={100}
+          className="w-32"
+          alt="Market Logo"
+          src="/img/market/logofull.svg"
+        />
       )}
 
       <div
@@ -92,15 +89,24 @@ const MobileNav = () => {
           if (mounted && !isLoggedIn) router.push("/login");
         }}
       >
-        {!mounted || userBalance === null ? (
+        {!mounted ? (
           <div className="w-16 h-4 bg-gray-700 animate-pulse rounded" />
         ) : isLoggedIn ? (
           <>
-            <Image width={20} height={20} alt="AVAX" src="/img/market/avax.svg" />
-            <p className="text-sm font-light text-white">{userBalance}</p>
+            <Image
+              width={20}
+              height={20}
+              alt="AVAX"
+              src="/img/market/avax.svg"
+            />
+            <p className="text-sm font-light text-white">
+              {avaxBalance}
+            </p>
           </>
         ) : (
-          <p className="text-sm font-semibold px-2 text-white">Login</p>
+          <p className="text-sm font-semibold px-2 text-white">
+            Login
+          </p>
         )}
       </div>
     </div>

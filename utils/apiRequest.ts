@@ -2,8 +2,8 @@
 import { toast } from "react-hot-toast";
 
 // Update API URL to local host
-export const API_URL = "http://localhost:7000";
-// export const API_URL = "https://axiomarket-server.onrender.com";
+// export const API_URL = "http://localhost:7000";
+export const API_URL = "https://axiomarket-server.onrender.com";
 
 type ApiOptions = {
   method?: string;

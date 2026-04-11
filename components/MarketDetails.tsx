@@ -18,6 +18,7 @@ export default function MarketDetails({ market, logo }: any) {
     const [activeTab, setActiveTab] = useState<Tab>("Chart");
     const [modalData, setModalData] = useState<any>(null);
     const [userId, setUserId] = useState<string | null>(null); // 👈 ADD THIS
+    const [interval, setInterval] = useState("5m");
 
     // ✅ GET USER FROM LOCAL STORAGE
     useEffect(() => {
@@ -65,12 +66,18 @@ export default function MarketDetails({ market, logo }: any) {
             />
 
             {isCrypto && market.metadata?.asset && (
-                <TradingViewRechart coinId={market.metadata.asset} />
-            )}
+                <TradingViewRechart
+                    coinId={market.metadata.asset}
+                    interval={interval}
+                />)}
 
             {isCrypto && (
-                <MarketStats market={market} totalVolume={totalVolume} />
-            )}
+                <MarketStats
+                    market={market}
+                    totalVolume={totalVolume}
+                    interval={interval}
+                    setInterval={setInterval}
+                />)}
 
             <div className="sticky top-0 z-50 backdrop-blur-sm pt-2">
                 <Tabs activeTab={activeTab} onChange={setActiveTab} />

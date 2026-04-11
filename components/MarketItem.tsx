@@ -273,6 +273,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                 </Link> */}
                 <div className="flex items-center  gap-2">
 
+
                     {/* CRYPTO LOGO */}
                     {isCrypto && (
                         <div className="relative mb-2 w-10 h-10 rounded-full overflow-hidden">
@@ -312,7 +313,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                             odds: Number(o.odds ?? 1),
                         }));
 
-                        const pools = sub.outcomes.map((o: { pool: any; }) => Number(o.pool || 0));
+                        const pools = sub.outcomes.map((o) => Number(o.pool ?? 0));
                         const totalPool = pools.reduce((a: any, b: any) => a + b, 0);
 
                         const minPercentage = 35; // minimum visible percent

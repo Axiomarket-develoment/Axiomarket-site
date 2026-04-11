@@ -1,12 +1,13 @@
 export type MarketType = "CRYPTO" | "SOCIAL" | "SPORT";
 export type MarketStatus = "PENDING" | "LIVE" | "ENDED" | "SETTLED";
 
-export interface Option {
+export interface outcomes {
   label: string;
   liquidity: number;
   odds?: number;
   volume: number;
   count?: number;
+  pool?: number;
   result?: boolean | null;
 }
 
@@ -19,10 +20,9 @@ export interface Resolution {
 export interface SubMarket {
   _id: any;
   id: any;
-  outcomes: any;
   question: string;
   marketType: MarketType;
-  options: Option[];
+  outcomes: outcomes[];
   totalVolume: number;
   tradeCount: number;
   status: MarketStatus;
@@ -57,6 +57,7 @@ export interface Market {
   startDate: string;
   endDate: string;
   durationMinutes: number;
+  conversationId: string;
   event?: Event;
   metadata?: Metadata;
   totalVolume?: number;

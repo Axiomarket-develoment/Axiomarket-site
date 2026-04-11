@@ -6,12 +6,14 @@ import { FcGoogle } from "react-icons/fc";
 import { FaTwitter } from "react-icons/fa";
 import ThemeSwitch from "./ThemeSwitch";
 import { usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const toggleModal = () => setModalOpen(prev => !prev);
 
+  const router = useRouter();
 
   const pathname = usePathname();
   const navlink = [
@@ -23,10 +25,10 @@ export default function Navbar() {
       name: "Market",
       href: "/market"
     },
-    {
-      name: "Waitlist",
-      href: "/waitlist"
-    },
+    // {
+    //   name: "Waitlist",
+    //   href: "/waitlist"
+    // },
     {
       name: "Leaderboard",
       href: "/leaderboard"
@@ -34,7 +36,7 @@ export default function Navbar() {
   ];
 
   return (
-    <div className="sticky  z-50 backdrop-blur-2xl top-0 bg-[#0D0D0D] shadow-2xl w-fit mx-auto rounded-[50px]  mt-6 border-red-100 " >
+    <div className="sticky  z-50 backdrop-blur-2xl top-8 bg-[#0D0D0D] shadow-2xl w-fit mx-auto rounded-[50px]  mt-6 border-red-100 " >
       {/* Navbar */}
       < div className="flex items-center justify-between w-full max-w-6xl mx-auto py-2 px-3" >
         <Image width={180} height={70} src="/img/home/logofull.svg" alt="Axio Market Logo" />
@@ -59,8 +61,8 @@ export default function Navbar() {
           })}
         </div>
         <button
-          onClick={toggleModal}
-          className="px-8 py-2 rounded-full text-sm font-medium transition-colors duration-300"
+          onClick={() => router.push("/login")}
+          className="px-8 py-2 rounded-full cursor-pointer text-sm font-medium transition-colors duration-300"
           style={{
             border: "1px solid transparent",
             background:

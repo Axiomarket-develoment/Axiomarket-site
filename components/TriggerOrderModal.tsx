@@ -8,6 +8,9 @@ import toast from "react-hot-toast";
 import { convertBalanceToUSD } from "@/utils/getAvaxPrice";
 import { setLocalStorage } from "@/utils/localStorage";
 
+import { doc, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebaseClient";
+
 interface Props {
     onClose?: () => void;
     market: Market;
@@ -42,13 +45,38 @@ const getTimeLeft = (endDate: string) => {
     return `${seconds}s`;
 };
 
-const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, odds, endDate , onSuccess}) => {
+const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, odds, endDate, onSuccess }) => {
     const [amount, setAmount] = useState<number | "">("");
     const [showWave, setShowWave] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [avaxBalance, setAvaxBalance] = useState<number>(0);
+
 
     const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
     const [timeLeft, setTimeLeft] = useState(getTimeLeft(endDate));
+
+
+    useEffect(() => {
+        const userStr = localStorage.getItem("user");
+
+        if (!userStr) return;
+
+        const user = JSON.parse(userStr);
+        const userId = user?._id;
+
+        if (!userId) return;
+
+        const ref = doc(db, "users", userId);
+
+        const unsub = onSnapshot(ref, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                setAvaxBalance(Number(data?.avaxBalance ?? 0));
+            }
+        });
+
+        return () => unsub();
+    }, []);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -67,14 +95,13 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
         setShowWave(true);
 
         const token = localStorage.getItem("token") || "";
-        const cachedBalance = Number(localStorage.getItem("cachedBalance") || 0);
 
         if (!amount || amount <= 0) {
             toast.error("Enter a valid amount");
             return;
         }
 
-        if (amount > cachedBalance) {
+        if (amount > avaxBalance) {
             toast.error("Insufficient balance");
             return;
         }

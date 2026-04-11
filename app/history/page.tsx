@@ -11,15 +11,21 @@ import { motion, AnimatePresence } from "framer-motion";
 
 // API TYPE (backend)
 type HistoryItem = {
-    _id: string;
-    userOutcome: "PENDING" | "WIN" | "LOSE";
-    stake: number;
+    id: string;
+    marketId: string;
+
+    marketQuestion: string;
+    outcomePicked: string;
+    amountStaked: number;
     potentialWin: number;
-    market: {
-        title: string;
-        image?: string;
-    };
-    createdAt: string;
+
+    marketResult?: string | null;
+    marketStatus?: string;
+
+    userOutcome: "PENDING" | "WIN" | "LOSE";
+    image?: string | null;
+
+    date: string;
 };
 
 // UI TYPE (for HistoryCard)
@@ -101,16 +107,14 @@ export default function HistoryPage() {
     /* ================= MAPPING ================= */
 
     const mappedItems: HistoryCardItem[] = filteredItems.map((item) => {
-        const market = item.market || { title: "Unknown Market", image: undefined };
-
         return {
-            marketQuestion: market.title,
-            outcomePicked: "", // fill if API provides
-            amountStaked: item.stake ?? 0,
+            marketQuestion: item.marketQuestion || "Unknown Market",
+            outcomePicked: item.outcomePicked || "N/A",
+            amountStaked: item.amountStaked ?? 0,
             potentialWin: item.potentialWin ?? 0,
             userOutcome: item.userOutcome ?? "PENDING",
-            image: market.image,
-            date: item.createdAt ?? new Date().toISOString(),
+            image: item.image || undefined,
+            date: item.date || new Date().toISOString(),
         };
     });
 

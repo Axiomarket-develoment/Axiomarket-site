@@ -123,14 +123,14 @@ export function MarketHeader({ market, isCrypto, logo: propLogo, userId }: Marke
                 whileTap={{ scale: 0.9 }}
             >
                 {/* Outline */}
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#f1f5f9" className="w-8 h-8 absolute top-0 left-0">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="#f1f5f9" className="w-6 h-6 absolute top-0 left-0">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 5v16l7-5 7 5V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
                 </svg>
 
                 {/* Filled */}
                 <AnimatePresence>
                     {bookmarked && (
-                        <motion.svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-8 h-8 absolute top-0 left-0" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} fill="#fff">
+                        <motion.svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" className="w-6 h-6 absolute top-0 left-0" initial={{ scale: 0 }} animate={{ scale: 1 }} exit={{ scale: 0 }} fill="#fff">
                             <path d="M5 5v16l7-5 7 5V5a2 2 0 00-2-2H7a2 2 0 00-2 2z" />
                         </motion.svg>
                     )}
