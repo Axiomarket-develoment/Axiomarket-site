@@ -18,13 +18,13 @@ export function MarketStats({
     );
 
     return (
-        <div className="flex mb-3 -mt-8 text-sm text-[#8B8B8B] justify-between items-center gap-2">
+        <div className="flex mb-3 -mt-2 text-sm text-[#8B8B8B] justify-between items-center gap-2">
             <div className="flex items-center gap-2">
                 <p>{tradeCount} Trade</p>
                 <p>${totalVolume}</p>
             </div>
 
-            <TimeRangeSelector value={interval} onChange={setInterval} />
+            {/* <TimeRangeSelector value={interval} onChange={setInterval} /> */}
         </div>
     );
 }

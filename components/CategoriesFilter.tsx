@@ -22,18 +22,19 @@ const CategoriesFilter: React.FC<Props> = ({
     setShowSavedOnly,
 }) => {
 
-    const filter1 = ["Trending", "Crypto", "Stocks", "Sports", "Politics", "Finance", "Entertainment", "Tech"];
+    const filter1 = ["Trending", "Crypto", "Meme Coins", "Sports", "Stocks", "X", "Politics", "Entertainment"];
 
     // 🔥 DYNAMIC FILTER MAP
     const filterMap: Record<string, string[]> = {
-        Trending: ["All Markets", "Avax", "BTC", "ETH","Chealse","Oil","Trump","Tesla","Apple"],
-        Crypto: ["All Markets", "BTC", "ETH", "SOL", "AVAX", "BNB", "SUI"],
-        Stocks: ["All Markets", "Tesla", "Apple", "Nvidia"],
-        Sports: ["All Markets", "Man Utd", "Chelsea", "Liverpool"],
-        Politics: ["All Markets", "Donald Trump", "Biden"],
-        Finance: ["All Markets", "Gold", "Oil"],
-        Entertainment: ["All Markets", "Drake", "Rihanna"],
-        Tech: ["All Markets", "AI", "OpenAI", "Google"],
+        Trending: ["All Markets", "$AVAX", "$BTC", "$ETH", "Chelsea", "Oil", "Trump", "Tesla", "Apple"],
+        Crypto: ["All Markets", "$AVAX", "$BTC", "$ETH", "$SOL", "$BNB", "$SUI"],
+        "Meme Coins": ["All Markets", "$DOGE", "$SHIB"],
+        Sports: ["All Markets", "Man Utd", "Real Madrid", "Barcelona", "Chelsea", "Bayern Munich", "Juventus", "Inter Milan", "Napoli", "Liverpool"],
+        Stocks: ["All Markets", "MTN", "GTBank", "Dangote Cement", "BUA Foods", "Apple", "Microsoft", "Alphabet", "Tesla", "Meta"],
+        X: ["All Markets", "Ronaldo", " Fabrizio Romano", "United Stand"],
+        Webx: ["All Markets", "Xeus", "Papa Kyenn", " Maliel", "Sensei", "Wale Moca"],
+        Politics: ["All Markets", "Donald Trump", "Tinubu"],
+        Entertainment: ["All Markets", "Wizkid", "Rema", "Davido", "Burna Boy", "Justin Bieber"],
     };
 
     const [activeFilter1, setActiveFilter1] = useState(filter1[0]);

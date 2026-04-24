@@ -81,12 +81,12 @@ export function TradingViewRechart({
     fetchData();
 
     // refresh speed depends on interval
-    const refreshMap: any = {
-      "1h": 15000,
-      "1d": 30000,
-      "1w": 60000,
+    const refreshMap: Record<string, number> = {
       "1m": 60000,
-      max: 120000,
+      "5m": 120000,
+      "15m": 180000,
+      "1h": 300000,
+      "1d": 600000,
     };
 
     intervalId = setInterval(fetchData, refreshMap[interval] || 60000);

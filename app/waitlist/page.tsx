@@ -1,7 +1,7 @@
 "use client"
 
 import Image from 'next/image'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import toast from 'react-hot-toast'
 import { apiRequest } from '@/utils/apiRequest'
@@ -10,6 +10,40 @@ const Waitlist = () => {
   const [email, setEmail] = useState("")
   const [loading, setLoading] = useState(false)
 
+  const [percentage, setPercentage] = useState(10)
+  const [slotsLeft, setSlotsLeft] = useState(null)
+
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      const { success, data } = await apiRequest(
+        "/user_ambassador/ambassador_stats",
+        { method: "GET" }
+      );
+
+      if (success) {
+        setSlotsLeft(data.ambassadorSlots);
+        setPercentage(data.percent); // 🔥 IMPORTANT
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+
+  const refreshStats = async () => {
+    const { success, data } = await apiRequest(
+      "/user_ambassador/ambassador_stats",
+      { method: "GET" }
+    );
+
+    if (success) {
+      setSlotsLeft(data.ambassadorSlots);
+      setPercentage(data.percent);
+    }
+  };
+
+  
   const handleJoinWaitlist = async () => {
     if (!email) {
       toast.error("Please enter your email")
@@ -17,7 +51,7 @@ const Waitlist = () => {
     }
 
     setLoading(true)
-    const { success } = await apiRequest("/user_waitlist/waitlist_register", {
+    const { success } = await apiRequest("/user_ambassador/ambassador_register", {
       method: "POST",
       body: { email },
       showSuccess: true,
@@ -26,6 +60,7 @@ const Waitlist = () => {
 
     if (success) {
       setEmail("")
+      refreshStats();
     }
   }
 
@@ -56,7 +91,7 @@ const Waitlist = () => {
         {/* Logo */}
         <div className=" lg:hidden z-10 px-6 pt-8">
           <Image
-            src="/img/logofull.svg"
+            src="/img/home/logofull.svg"
             alt="Logo"
             width={200}
             height={40}
@@ -73,18 +108,25 @@ const Waitlist = () => {
           />
         </div>
 
+
+
         {/* Main Content */}
         <div className="relative lg:hidden z-10 h-full flex flex-col justify-end px-4 lg:px-20 flex-1 text-white max-w-xl">
-          <h1 className="text-3xl lg:text-5xl font-bold leading-tight">Waitlist</h1>
+          <h1 className="text-3xl lg:text-5xl font-bold leading-tight">Ambassador Program</h1>
           <p className="mt-4 text-2xl font-semibold lg:text-base 
             bg-gradient-to-r from-[#343434] via-[#505050] to-[#8B8B8B] 
             bg-clip-text text-transparent">
             Take your Finance From Zero to Hero
           </p>
           <p className="mt-4 text-sm lg:text-base text-gray-300">
-            Next gen prediction market. AxioMarket is coming soon to transform how you make predictions and give you more leverage in the market.
+            Axiomarket is coming soon. Join Ambassador Program to get {percentage}% on Every Market you create on Axiomarket.
           </p>
 
+
+
+          <p className="mt-2 text-sm text-green-400">
+            {slotsLeft !== null ? `${slotsLeft} ambassador slots left` : "Loading slots..."}
+          </p>
           <div className='flex justify-stretch lg:flex-row mb-12 gap-2 items-center mt-8 w-full'>
             <motion.input
               initial={{ opacity: 0, x: -20 }}
@@ -105,7 +147,7 @@ const Waitlist = () => {
               disabled={loading}
               className='lg:mt-0 bg-[white] w-1/3 text-xs text-[#050505] rounded-[10px] px-2 py-3.5 hover:bg-[#00c800] t transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              {loading ? "Joining..." : "Join Waitlist"}
+              {loading ? "Joining..." : "Join"}
             </motion.button>
           </div>
         </div>
@@ -119,7 +161,7 @@ const Waitlist = () => {
             Take your Finance From Zero to Hero
           </p>
           <p className="mt-4 text-sm lg:text-base text-gray-300">
-            Next gen prediction market. AxioMarket is coming soon to transform how you make predictions and give you more leverage in the market.
+            Axiomarket is coming soon. Join Ambassador Program to get {percentage}% on Every Market you create on Axiomarket.
           </p>
 
           <div className='flex justify-stretch lg:flex-row mb-12 gap-2 items-center mt-8 w-full'>
@@ -142,7 +184,7 @@ const Waitlist = () => {
               disabled={loading}
               className='lg:mt-0 bg-[white] w-1/3 lg:w-[30%] text-xs lg:text-base font-semibold text-[#050505] rounded-[10px] px-2 lg:py-2.5 py-3.5 hover:bg-[#00c800] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed'
             >
-              {loading ? "Joining..." : "Join Waitlist"}
+              {loading ? "Joining..." : "Join"}
             </motion.button>
           </div>
         </div>

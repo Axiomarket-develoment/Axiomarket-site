@@ -13,6 +13,54 @@ import { SubMarkets } from "./SubMarkets";
 import AiInsight from "./AiInsight";
 import TriggerOrderModal from "./TriggerOrderModal";
 import UserChat from "./ChatRoom";
+import TradingViewWidget from "./TradingViewWidget";
+
+function normalizeAsset(asset: string) {
+    return asset
+        ?.toLowerCase()
+        ?.replace("$", "")
+        ?.trim();
+}
+
+function mapToTradingViewSymbol(asset: string) {
+    const clean = normalizeAsset(asset);
+
+    const map: Record<string, string> = {
+        bitcoin: "BINANCE:BTCUSDT",
+        btc: "BINANCE:BTCUSDT",
+
+        ethereum: "BINANCE:ETHUSDT",
+        eth: "BINANCE:ETHUSDT",
+
+        solana: "BINANCE:SOLUSDT",
+        sol: "BINANCE:SOLUSDT",
+
+        dogecoin: "BINANCE:DOGEUSDT",
+        doge: "BINANCE:DOGEUSDT",
+
+        avalanche: "BINANCE:AVAXUSDT",
+        avax: "BINANCE:AVAXUSDT",
+
+        "avalanche-coin": "BINANCE:AVAXUSDT",
+
+        binancecoin: "BINANCE:BNBUSDT",
+        bnb: "BINANCE:BNBUSDT",
+    };
+
+    return map[clean] || "BINANCE:BTCUSDT";
+}
+
+function convertInterval(interval: string) {
+    const map: Record<string, string> = {
+        "1m": "1",
+        "5m": "5",
+        "15m": "15",
+        "1h": "60",
+        "1d": "D",
+    };
+
+    return map[interval] || "5";
+}
 
 export default function MarketDetails({ market, logo }: any) {
     const [activeTab, setActiveTab] = useState<Tab>("Chart");
@@ -66,10 +114,12 @@ export default function MarketDetails({ market, logo }: any) {
             />
 
             {isCrypto && market.metadata?.asset && (
-                <TradingViewRechart
-                    coinId={market.metadata.asset}
-                    interval={interval}
-                />)}
+                <TradingViewWidget
+                    key={mapToTradingViewSymbol(market.metadata.asset)}
+                    symbol={mapToTradingViewSymbol(market.metadata.asset)}
+                    interval={convertInterval(interval)}
+                />
+            )}
 
             {isCrypto && (
                 <MarketStats
@@ -79,11 +129,11 @@ export default function MarketDetails({ market, logo }: any) {
                     setInterval={setInterval}
                 />)}
 
-            <div className="sticky top-0 z-50 backdrop-blur-sm pt-2">
+            <div className=" z-50 backdrop-blur-sm pt-2">
                 <Tabs activeTab={activeTab} onChange={setActiveTab} />
             </div>
 
-            <div className="sticky top-16 z-50 pt-2 backdrop-blur-sm">
+            <div className=" z-50 pt-2 backdrop-blur-sm">
                 <SubMarkets
                     subMarkets={market.subMarkets}
                     isSport={isSport}

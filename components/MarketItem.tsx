@@ -28,24 +28,27 @@ type Outcome = {
     liquidity?: number;
     pool?: number;
     volume?: number;
+    percentage?: number;
 };
 
 
 export const formatCompact = (num: number) => {
     if (num >= 1_000_000) {
-        return (num / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+        return ((num / 1_000_000).toFixed(2)).replace(/\.?0+$/, "") + "M";
     }
-    if (num >= 1_000) {
-        return (num / 1_000).toFixed(1).replace(/\.0$/, "") + "K";
-    }
-    return num.toString();
-};
 
+    if (num >= 1_000) {
+        return ((num / 1_000).toFixed(2)).replace(/\.?0+$/, "") + "K";
+    }
+
+    return Number(num.toFixed(2)).toString();
+};
 
 
 type MarketOption = {
     label: string;
     odds: number;
+    percentage: number;
 };
 
 
@@ -205,7 +208,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
         market.subMarkets[0].question === market.question;
 
     // New function: handle option click
-    const handleOptionClick = (e: React.MouseEvent, outcome: string, odds: number) => {
+    const handleOptionClick = (e: React.MouseEvent, outcome: string, percentage: number) => {
         e.stopPropagation();
 
         // 🔒 Check if user is logged in
@@ -228,7 +231,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
 
         // Otherwise, open modal
         setSelectedOutcome(outcome);  // store "YES" or "NO"
-        setSelectedOdds(odds);        // store the odds for that option
+        setSelectedOdds(percentage);        // store the odds for that option
         setModalOpen(true);
     };
     // Total trades across all subMarkets & outcomes
@@ -237,13 +240,22 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
         (acc, sub) => acc + (sub.tradeCount || 0),
         0
     );
-    // Total liquidity
-    const totalLiquidity = market.subMarkets.reduce(
-        (accSub, sub) =>
-            accSub +
-            sub.outcomes.reduce((accOutcome: number, o: Outcome) => accOutcome + Number(o.liquidity ?? 0), 0),
-        0
-    );
+    // // Total liquidity
+    // const totalLiquidity = market.subMarkets.reduce(
+    //     (accSub, sub) =>
+    //         accSub +
+    //         sub.outcomes.reduce((accOutcome: number, o: Outcome) => accOutcome + Number(o.liquidity ?? 0), 0),
+    //     0
+    // );
+
+    const handleSuccess = () => {
+        setShowSuccess(true);
+        setModalOpen(false);
+
+        setTimeout(() => {
+            router.push("/history");
+        }, 500);
+    };
 
     const closeModal = () => setModalOpen(false);
     return (
@@ -251,7 +263,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
             {modalOpen && (
                 <TriggerOrderModal
                     onClose={() => setModalOpen(false)}
-                    onSuccess={() => setShowSuccess(true)} // ✅ trigger success overlay
+                    onSuccess={handleSuccess} // ✅ trigger success overlay
                     market={market}
                     logo={logo}
                     outcome={selectedOutcome}
@@ -263,7 +275,6 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
             {showSuccess && (
                 <SuccessScreen
                     isOpen={showSuccess}
-                    onClose={() => setShowSuccess(false)}
                 />
             )}
             <div className="relative bg-[#0C0C0C] text-white rounded-2xl p-3 overflow-hidden">
@@ -308,39 +319,21 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                 {/* SUB MARKETS */}
                 <div className="space-y-3 relative z-10">
                     {market.subMarkets.map((sub, i) => {
+
+
                         const options: MarketOption[] = sub.outcomes.map((o: Outcome) => ({
                             label: String(o.label),
                             odds: Number(o.odds ?? 1),
+                            percentage: typeof o.percentage === "number" && !isNaN(o.percentage)
+                                ? o.percentage
+                                : 50, // ✅ ADD THIS
                         }));
 
-                        const pools = sub.outcomes.map((o) => Number(o.pool ?? 0));
-                        const totalPool = pools.reduce((a: any, b: any) => a + b, 0);
 
-                        const minPercentage = 35; // minimum visible percent
+                        const percentages = options.map(o => o.percentage ?? 50);
 
-                        let percentages: number[] = [];
-
-                        if (totalPool === 0) {
-                            // If no liquidity at all, split equally
-                            percentages = new Array(options.length).fill(100 / options.length);
-                        } else {
-                            // Calculate raw percentages
-                            const rawPercentages = pools.map((p: number) => (p / totalPool) * 100);
-
-                            // Count how many are below the minimum
-                            const belowMin = rawPercentages.filter((p: number) => p < minPercentage).length;
-                            const totalExtra = belowMin * minPercentage; // total space these options need
-
-                            const totalAboveMin = rawPercentages
-                                .filter((p: number) => p >= minPercentage)
-                                .reduce((a: any, b: any) => a + b, 0);
-
-                            percentages = rawPercentages.map((p: number) => {
-                                if (p < minPercentage) return minPercentage;
-                                // Scale down the bigger ones to keep total 100
-                                return p - ((p - minPercentage) / totalAboveMin) * totalExtra;
-                            });
-                        }
+                        const max = Math.max(...percentages);
+                        const min = Math.min(...percentages);
 
                         return (
                             <div key={i} className={`rounded-xl ${isSport ? "flex gap-2" : singleSub ? "flex gap-2" : "flex w-full items-center justify-between"}`}>
@@ -348,25 +341,23 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
 
                                 <div className="flex w-full gap-2">
                                     {options.map((opt, j) => {
-                                        const percentage = percentages[j];
+                                        const percentage = opt.percentage ?? 50;
                                         const formattedPercentage = percentage.toFixed(0);
 
-                                        const maxPool = Math.max(...pools);
-                                        const minPool = Math.min(...pools);
 
                                         const textColor =
-                                            maxPool === minPool
+                                            max === min
                                                 ? "text-white"
-                                                : pools[j] === maxPool
+                                                : percentage === max
                                                     ? "text-[#56CD00]"
-                                                    : pools[j] === minPool
+                                                    : percentage === min
                                                         ? "text-[#FF394A]"
                                                         : "text-white";
 
                                         return (
                                             <button
                                                 key={j}
-                                                onClick={(e) => handleOptionClick(e, opt.label, opt.odds)}
+                                                onClick={(e) => handleOptionClick(e, opt.label, opt.percentage)}
                                                 className={`flex-1 w-full flex justify-center items-center gap-1 py-4 bg-[#222] hover:bg-[#333] transition p-1 rounded-md text-xs ${textColor} relative z-20`}
                                             >
                                                 <div>{opt.label}</div>

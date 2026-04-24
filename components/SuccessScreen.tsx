@@ -6,21 +6,9 @@ import Image from "next/image";
 
 interface Props {
   isOpen: boolean;
-  onClose?: () => void;
 }
 
-const SuccessScreen: React.FC<Props> = ({ isOpen, onClose }) => {
-
-  // ✅ Auto close after animation
-  useEffect(() => {
-    if (isOpen) {
-      const timer = setTimeout(() => {
-        onClose?.();
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
+const SuccessScreen: React.FC<Props> = ({ isOpen, }) => {
 
   return (
     <AnimatePresence>

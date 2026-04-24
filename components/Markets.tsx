@@ -5,14 +5,17 @@ import MarketItem from "./MarketItem";
 import { Market } from "@/data/market";
 import { MarketSkeleton } from "./skeletons/MarketSkeleton";
 import { db } from "@/lib/firebaseClient";
-import { collection, query, orderBy, onSnapshot, where, doc } from "firebase/firestore";
+import {
+  collection,
+  query,
+  orderBy,
+  onSnapshot,
+  where,
+  doc,
+} from "firebase/firestore";
 import { AnimatePresence, motion } from "framer-motion";
 
 const STORAGE_KEY = "markets";
-
-function shuffleArray(array: Market[]) {
-  return [...array].sort(() => Math.random() - 0.5);
-}
 
 interface MarketsProps {
   activeCategory: string;
@@ -20,13 +23,17 @@ interface MarketsProps {
   showSavedOnly: boolean;
 }
 
-const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, showSavedOnly }) => {
+const Markets: React.FC<MarketsProps> = ({
+  activeCategory,
+  activeSubCategory,
+  showSavedOnly
+}) => {
   const [markets, setMarkets] = useState<Market[]>([]);
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userId, setUserId] = useState<string | null>(null);
   const [savedMarkets, setSavedMarkets] = useState<string[]>([]);
-
+  const [tick, setTick] = useState(0);
 
   const handleToggleSaved = (marketId: string, isNowSaved: boolean) => {
     setSavedMarkets((prev) => {
@@ -35,118 +42,27 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
     });
   };
 
+  // ---------------- MARKETS REALTIME ----------------
   useEffect(() => {
-    if (!userId) return;
+    setLoading(true);
 
-    const userRef = doc(db, "users", userId);
-
-    const unsubscribeUser = onSnapshot(userRef, (snapshot) => {
-      if (snapshot.exists()) {
-        const data = snapshot.data();
-        setSavedMarkets(data.savedMarkets || []);
-      }
-    });
-
-    return () => unsubscribeUser();
-  }, [userId]);
-
-  // 0️⃣ Load user from localStorage synchronously
-  useEffect(() => {
-    const userStr = localStorage.getItem("user");
-    if (userStr) {
-      try {
-        const parsedUser = JSON.parse(userStr);
-        if (parsedUser?._id) {
-          setUserId(parsedUser._id);
-        } else {
-          console.warn("User object missing _id:", parsedUser);
-        }
-      } catch (err) {
-        console.error("Failed to parse user from localStorage:", err);
-      }
-    }
-  }, []);
-
-  // 1️⃣ Load cached markets immediately for fast UX
-  useEffect(() => {
-    const cached = localStorage.getItem(STORAGE_KEY);
-    if (cached) {
-      try {
-        const parsedMarkets = JSON.parse(cached);
-        setMarkets(parsedMarkets);
-        setLoading(false);
-      } catch (err) {
-        console.error("Failed to parse cached markets:", err);
-      }
-    }
-  }, []);
-
-  // 2️⃣ Subscribe to Firestore orders for the user (only if userId exists)
-  useEffect(() => {
-    if (!userId) return;
-
-    const ordersQuery = query(
-      collection(db, "orders"),
-      where("userId", "==", userId)
+    const q = query(
+      collection(db, "markets"),
+      orderBy("createdAt", "desc")
     );
 
-    const unsubscribeOrders = onSnapshot(ordersQuery, (snapshot) => {
-      const data = snapshot.docs.map((doc) => ({ _id: doc.id, ...doc.data() }));
-      setOrders(data);
-    });
+    const unsub = onSnapshot(q, (snapshot) => {
+      const liveMarkets: Market[] = snapshot.docs.map((docSnap) => {
+        const data = docSnap.data() as any;
 
-    return () => {
-      unsubscribeOrders();
-    };
-  }, [userId]);
-
-
-  const finalMarkets = React.useMemo(() => {
-    const now = Date.now();
-
-    const filtered = markets.filter((market) => {
-      const matchesSearch =
-        activeSubCategory === "All Markets"
-          ? true
-          : market.question?.toLowerCase().includes(activeSubCategory.toLowerCase()) ||
-          market.metadata?.assetSymbol?.toLowerCase().includes(activeSubCategory.toLowerCase());
-
-      const isSettled = market.status === "SETTLED";
-      if (isSettled) return false;
-
-      const matchesCategory =
-        activeCategory === "Trending" ||
-        market.marketType?.toLowerCase() === activeCategory.toLowerCase();
-
-      const matchesSaved =
-        !showSavedOnly || savedMarkets.includes(market._id);
-
-      return matchesCategory && matchesSearch && matchesSaved;
-    });
-
-    return filtered.sort((a, b) => {
-      const getPriority = (m: Market) =>
-        new Date(m.endDate).getTime() < now ? 2 : 1;
-
-      return getPriority(a) - getPriority(b);
-    });
-  }, [markets, activeCategory, activeSubCategory, showSavedOnly, savedMarkets]);
-
-
-
-  // 3️⃣ Subscribe to Firestore markets
-  useEffect(() => {
-    const marketsQuery = query(collection(db, "markets"), orderBy("createdAt", "desc"),);
-
-    const unsubscribeMarkets = onSnapshot(marketsQuery, (snapshot) => {
-      const liveMarkets: Market[] = snapshot.docs.map((doc) => {
-        const data = doc.data() as Partial<Omit<Market, "_id" | "id">>; // allow partial
         return {
-          _id: doc.id,
-          id: doc.id, // also set `id`
+          _id: docSnap.id,
+          id: docSnap.id,
           question: data.question || "",
           conversationId: data.conversationId || "",
-          marketType: data.marketType as Market["marketType"] || "CRYPTO",
+          marketType: data.marketType || "CRYPTO",
+
+          // 🔥 FIX: always convert object → array safely
           subMarkets: (data.subMarkets || []).map((sub: any) => ({
             ...sub,
             outcomes: (sub.outcomes || []).map((o: any) => ({
@@ -156,29 +72,114 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
               count: o.count || 0,
               odds: o.odds || 1,
               result: o.result ?? null,
+              percentage: Number(o.percentage ?? 50),
             })),
-          })), startDate: data.startDate || "",
+          })),
+
+          startDate: data.startDate || "",
           endDate: data.endDate || "",
           durationMinutes: data.durationMinutes || 0,
           metadata: data.metadata,
           status: data.status || "PENDING",
           totalVolume: data.totalVolume || 0,
           tradeCount: data.tradeCount || 0,
-          featured: data.featured,
-          category: data.category,
           createdAt: data.createdAt || "",
         };
       });
-      setMarkets(liveMarkets);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(liveMarkets));
+
+      const cleanMarkets = liveMarkets.filter(
+        (m) => m.status === "LIVE" || m.status === "ENDED"
+      );
+
+      // 🔥 force new reference always (important for React diffing)
+      setMarkets([...cleanMarkets]);
+      setTick(prev => prev + 1);
       setLoading(false);
     });
 
-    return () => {
-      unsubscribeMarkets();
-    };
+    return () => unsub();
   }, []);
 
+  // ---------------- USER ID ----------------
+  useEffect(() => {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        const parsedUser = JSON.parse(userStr);
+        if (parsedUser?._id) setUserId(parsedUser._id);
+      } catch (err) {
+        console.error("Failed to parse user:", err);
+      }
+    }
+  }, []);
+
+  // ---------------- SAVED ----------------
+  useEffect(() => {
+    if (!userId) return;
+
+    const userRef = doc(db, "users", userId);
+
+    const unsub = onSnapshot(userRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        setSavedMarkets(data.savedMarkets || []);
+      }
+    });
+
+    return () => unsub();
+  }, [userId]);
+
+  // ---------------- ORDERS ----------------
+  useEffect(() => {
+    if (!userId) return;
+
+    const q = query(collection(db, "orders"), where("userId", "==", userId));
+
+    const unsub = onSnapshot(q, (snap) => {
+      const data = snap.docs.map((d) => ({ _id: d.id, ...d.data() }));
+      setOrders(data);
+    });
+
+    return () => unsub();
+  }, [userId]);
+
+  // ---------------- FILTER ----------------
+  const finalMarkets = React.useMemo(() => {
+    const now = Date.now();
+
+    return markets
+      .filter((market) => {
+        const matchesSearch =
+          activeSubCategory === "All Markets"
+            ? true
+            : market.question
+              ?.toLowerCase()
+              .includes(activeSubCategory.toLowerCase()) ||
+            market.metadata?.assetSymbol
+              ?.toLowerCase()
+              .includes(activeSubCategory.toLowerCase());
+
+        const isSettled = market.status === "SETTLED";
+        if (isSettled) return false;
+
+        const matchesCategory =
+          activeCategory === "Trending" ||
+          market.marketType?.toLowerCase() === activeCategory.toLowerCase();
+
+        const matchesSaved =
+          !showSavedOnly || savedMarkets.includes(market._id);
+
+        return matchesCategory && matchesSearch && matchesSaved;
+      })
+      .sort((a, b) => {
+        const getPriority = (m: Market) =>
+          new Date(m.endDate).getTime() < now ? 2 : 1;
+
+        return getPriority(a) - getPriority(b);
+      });
+  }, [markets, activeCategory, activeSubCategory, showSavedOnly, savedMarkets]);
+
+  // ---------------- UI ----------------
   if (loading && markets.length === 0) {
     return (
       <div className="p-2 mb-24 grid gap-4">
@@ -196,17 +197,20 @@ const Markets: React.FC<MarketsProps> = ({ activeCategory, activeSubCategory, sh
       ) : (
         <AnimatePresence>
           {finalMarkets.map((market, index) => {
-            const userOrdersForMarket = orders.filter((o) => o.marketId === market._id);
+            const userOrdersForMarket = orders.filter(
+              (o) => o.marketId === market._id
+            );
 
             return (
               <motion.div
-                key={market._id || index}
+                key={market._id?.toString() ?? index}
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 20 }}
                 transition={{ duration: 0.4, ease: "easeOut" }}
               >
                 <MarketItem
+                  key={`${market._id?.toString() ?? index}-${tick}`}
                   market={market}
                   userOrders={userOrdersForMarket}
                   initialSaved={savedMarkets.includes(market._id)}

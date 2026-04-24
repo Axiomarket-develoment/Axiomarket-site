@@ -46,8 +46,8 @@ const Waitlist = () => {
                 </div>
                 <div className=" hidden lg:flex z-10 px-10 pt-8">
                     <Image
-                        src="/img/logofull.svg"
-                        alt="Logo"
+                        src="/img/home/logofull.svg"
+                        alt="Logo9"
                         width={200}
                         height={40}
                         className="object-contain"

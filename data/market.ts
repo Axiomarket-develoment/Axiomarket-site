@@ -8,6 +8,7 @@ export interface outcomes {
   volume: number;
   count?: number;
   pool?: number;
+  percentage?: number;
   result?: boolean | null;
 }
 

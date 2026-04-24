@@ -10,6 +10,7 @@ import { setLocalStorage } from "@/utils/localStorage";
 
 import { doc, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebaseClient";
+import SuccessScreen from "./SuccessScreen";
 
 interface Props {
     onClose?: () => void;
@@ -48,7 +49,6 @@ const getTimeLeft = (endDate: string) => {
 const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, odds, endDate, onSuccess }) => {
     const [amount, setAmount] = useState<number | "">("");
     const [showWave, setShowWave] = useState(false);
-    const [showSuccess, setShowSuccess] = useState(false);
     const [avaxBalance, setAvaxBalance] = useState<number>(0);
 
 
@@ -128,20 +128,14 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
                     amount: usdAmount,
                 },
             });
-
             if (response.success) {
-                setLocalStorage("cachedBalance", response.data.user.balance.testnet);
+                setLocalStorage("cachedBalance", response.data.balance.testnet);
                 setLocalStorage("user", response.data.user);
 
-                setStatus("success");
-
-                // 🚀 trigger the external overlay
                 onSuccess?.();
 
-                setTimeout(() => {
-                    onClose?.();
-                    setStatus("idle");
-                }, 2000);
+              
+                return;
             }
             else {
                 setStatus("idle");
@@ -155,121 +149,91 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
 
 
     return (
-        <AnimatePresence>
-            <motion.div
-                className="h-[100dvh] w-full bg-black/20 backdrop-blur-xs fixed top-0 left-0 z-50 flex justify-center items-end md:items-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={onClose}
-            >
-                <motion.div
-                    className="bg-[#050505] rounded-2xl w-full max-w-md p-4"
-                    initial={{ y: 200, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: 200, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                    onClick={(e) => e.stopPropagation()}
-                >
-
-                    <h3 className="text-sm text-center font-semibold my-4">Make Your Prediction</h3>
-                    {/* Market info */}
-                    <div className="flex items-center gap-2 mb-4">
-                        {logo && (
-                            <Image
-                                src={logo}
-                                alt={market.metadata?.asset || "logo"}
-                                width={42}
-                                height={42}
-                            />
-                        )}
-                        <h2 className="text-white font-bold mb-2 text-sm">{market.question}</h2>
-                    </div>
-
-                    <div className="flex bg-[#0C0C0C] py-5 px-3 rounded-lg items-center justify-between w-full">
-
-
-                        {outcome && (
-                            <span className=" text-xs text-green-400 font-semibold">
-                                {outcome?.toUpperCase()} -{odds != null ? (odds % 1 === 0 ? `${odds}.0` : odds) : ""}x
-                            </span>
-                        )}
-                        <p className="text-xs text-gray-400  ">
-                            {timeLeft === "Ended" ? "Market Ended" : `Ends in ${timeLeft}`}
-                        </p>
-                    </div>
-                    {/* Input for amount */}
-                    <div className="flex w-full items-center gap-2 my-4">
-                        {/* <label className="text-xs text-gray-400">Amount (AVAX)</label> */}
-                        <input
-                            type="number"
-                            value={amount}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setAmount(val === "" ? "" : Number(val));
-                            }}
-                            placeholder="0.0"
-                            className="bg-[#0C0C0C] placeholder:text-[#56CD00] rounded-full text-[#56CD00] text-sm placeholder:text-sm w-full  p-3 py-3  focus:outline-none"
-                        />
-
-                        <div
-                            className={`relative flex gap-1 py-3 px-6 bg-[#000000] items-center rounded-full w-fit cursor-pointer overflow-hidden
-                ${showWave ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                            onClick={handleSubmit}
-                        >
-                            {showWave && (
-                                <div className="absolute top-0 left-0 w-full h-full bg-[#000000] opacity-50 animate-wave"></div>
-                            )}
-                            <p className="text-[#FF394A] text-sm font-semibold whitespace-nowrap z-10">
-                                Axe It
-                            </p>
-                            <Image width={20} alt="" height={20} src={"/img/logo2.svg"} className="z-10" />
-                        </div>
-                    </div>
-
-
-
-                    {/* Submit button */}
-
-                </motion.div>
-            </motion.div>
+        <>
 
 
             <AnimatePresence>
-                {status === "success" && (
+                <motion.div
+                    className="h-[100dvh] w-full bg-black/20 backdrop-blur-xs fixed top-0 left-0 z-50 flex justify-center items-end md:items-center"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    onClick={onClose}
+                >
                     <motion.div
-                        className="absolute inset-0 bg-[#050505] flex flex-col items-center justify-center rounded-2xl"
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
+                        className="bg-[#050505] rounded-2xl w-full max-w-md p-4"
+                        initial={{ y: 200, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 200, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        onClick={(e) => e.stopPropagation()}
                     >
-                        <motion.div
-                            initial={{ scale: 0.6, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            transition={{ duration: 0.4 }}
-                        >
-                            <Image
-                                src="/img/logo2.svg"
-                                alt="success"
-                                width={60}
-                                height={60}
-                                className="mb-4"
+
+                        <h3 className="text-sm text-center font-semibold my-4">Make Your Prediction</h3>
+                        {/* Market info */}
+                        <div className="flex items-center gap-2 mb-4">
+                            {logo && (
+                                <Image
+                                    src={logo}
+                                    alt={market.metadata?.asset || "logo"}
+                                    width={42}
+                                    height={42}
+                                />
+                            )}
+                            <h2 className="text-white font-bold mb-2 text-sm">{market.question}</h2>
+                        </div>
+
+                        <div className="flex bg-[#0C0C0C] py-5 px-3 rounded-lg items-center justify-between w-full">
+
+
+                            {outcome && (
+                                <span className=" text-xs text-green-400 font-semibold">
+                                    {outcome?.toUpperCase()} - {odds != null ? (odds % 1 === 0 ? `${odds}` : odds) : ""}%
+                                </span>
+                            )}
+                            <p className="text-xs text-gray-400  ">
+                                {timeLeft === "Ended" ? "Market Ended" : `Ends in ${timeLeft}`}
+                            </p>
+                        </div>
+                        {/* Input for amount */}
+                        <div className="flex w-full items-center gap-2 my-4">
+                            {/* <label className="text-xs text-gray-400">Amount (AVAX)</label> */}
+                            <input
+                                type="number"
+                                value={amount}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setAmount(val === "" ? "" : Number(val));
+                                }}
+                                placeholder="0.0"
+                                className="bg-[#0C0C0C] placeholder:text-[#56CD00] rounded-full text-[#56CD00] text-sm placeholder:text-sm w-full  p-3 py-3  focus:outline-none"
                             />
-                        </motion.div>
 
-                        <p className="text-white font-semibold text-lg">
-                            Prediction Placed
-                        </p>
+                            <div
+                                className={`relative flex gap-1 py-3 px-6 bg-[#000000] items-center rounded-full w-fit cursor-pointer overflow-hidden
+                ${showWave ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                                onClick={handleSubmit}
+                            >
+                                {showWave && (
+                                    <div className="absolute top-0 left-0 w-full h-full bg-[#000000] opacity-50 animate-wave"></div>
+                                )}
+                                <p className="text-[#FF394A] text-sm font-semibold whitespace-nowrap z-10">
+                                    Axe It
+                                </p>
+                                <Image width={20} alt="" height={20} src={"/img/logo2.svg"} className="z-10" />
+                            </div>
+                        </div>
 
-                        <p className="text-gray-400 text-sm mt-2 text-center">
-                            Your position has been successfully entered 🚀
-                        </p>
+
+
+                        {/* Submit button */}
+
                     </motion.div>
-                )}
-
+                </motion.div>
 
             </AnimatePresence>
-        </AnimatePresence>
+
+        </>
     );
 };
 

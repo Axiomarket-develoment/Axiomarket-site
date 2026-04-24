@@ -12,8 +12,9 @@ export default function MarketClient() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const [activeCategory, setActiveCategory] = useState("Trending"); // Filter 1
-  const [activeSubCategory, setActiveSubCategory] = useState("All Markets"); // Filter 2
+  // ✅ STATE MUST BE HERE
+  const [activeCategory, setActiveCategory] = useState("Trending");
+  const [activeSubCategory, setActiveSubCategory] = useState("All Markets");
   const [showSavedOnly, setShowSavedOnly] = useState(false);
 
   useEffect(() => {
@@ -44,8 +45,10 @@ export default function MarketClient() {
           priority
         />
       </div>
+
       <div className="relative z-20 flex flex-col min-h-[60px]">
         <MobileNav />
+
         <CategoriesFilter
           activeCategory={activeCategory}
           setActiveCategory={setActiveCategory}
@@ -54,11 +57,13 @@ export default function MarketClient() {
           showSavedOnly={showSavedOnly}
           setShowSavedOnly={setShowSavedOnly}
         />
+
         <Markets
           activeCategory={activeCategory}
           activeSubCategory={activeSubCategory}
-          showSavedOnly={showSavedOnly} // pass it here
+          showSavedOnly={showSavedOnly}
         />
+
         <DownBar />
       </div>
     </div>

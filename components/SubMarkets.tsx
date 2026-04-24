@@ -27,20 +27,14 @@ export function SubMarkets({
   return (
     <div className="space-y-3 relative z-10">
       {subMarkets.map((sub: any, i: number) => {
-        // ✅ Calculate liquidity per submarket
-        const totalLiquidity = sub.outcomes?.reduce(
-          (acc: number, o: any) => acc + Number(o.pool || 0),
-          0
-        );
-
         return (
           <div
             key={i}
             className={`rounded-xl ${isSport
+              ? "flex gap-2"
+              : singleSub
                 ? "flex gap-2"
-                : singleSub
-                  ? "flex gap-2"
-                  : "flex w-full items-center justify-between"
+                : "flex w-full items-center justify-between"
               }`}
           >
             {!singleSub && !isSport && (
@@ -52,36 +46,27 @@ export function SubMarkets({
                 }`}
             >
               {sub.outcomes?.map((opt: any, j: number) => {
-                const liquidity = Number(opt.liquidity || 0);
-
-                // ✅ Default = 50%
-                let percentage = 50;
-
-                if (totalLiquidity > 0) {
-                  percentage = (liquidity / totalLiquidity) * 100;
-                }
-
+                // ✅ NOW USING BACKEND VALUE DIRECTLY
+                const percentage = Number(opt.percentage ?? 50);
                 const formattedPercentage = percentage.toFixed(0);
 
-                // ✅ Determine max/min for coloring
+                // Keep UI logic unchanged (optional safety fallback)
                 const percentages = sub.outcomes.map((o: any) =>
-                  totalLiquidity > 0
-                    ? (Number(o.liquidity || 0) / totalLiquidity) * 100
-                    : 50
+                  Number(o.percentage ?? 50)
                 );
 
                 const max = Math.max(...percentages);
                 const min = Math.min(...percentages);
 
-                const isMax = percentage === max;
-                const isMin = percentage === min;
+                // 👇 IMPORTANT: prevent flat markets bug
+                const isFlatMarket = max === min;
 
                 const textColor =
-                  totalLiquidity === 0
+                  isFlatMarket
                     ? "text-white"
-                    : isMax
+                    : percentage === max
                       ? "text-[#56CD00]"
-                      : isMin
+                      : percentage === min
                         ? "text-[#FF394A]"
                         : "text-white";
 
@@ -110,7 +95,7 @@ export function SubMarkets({
                     <div className="flex gap-1 items-center">
                       <span>{opt.label}</span>
                       <p>-</p>
-                      <span className=" opacity-70">
+                      <span className="opacity-70">
                         {formattedPercentage}%
                       </span>
                     </div>

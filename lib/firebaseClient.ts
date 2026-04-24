@@ -2,13 +2,13 @@ import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyANutOa1nIu8Nr1B-wIs2M3HuQ5ub-B3Ow",
-  authDomain: "axiomarket-e4e10.firebaseapp.com",
-  projectId: "axiomarket-e4e10",
-  storageBucket: "axiomarket-e4e10.appspot.com", // note: remove .firebasestorage.app typo
-  messagingSenderId: "598484332433",
-  appId: "1:598484332433:web:5c805218c60f2d60d1f430",
-  measurementId: "G-E04L6PC1D4"
+  apiKey: "AIzaSyCCrF4NYnNN-ds-zok_itQQYHuY94JQ5YU",
+  authDomain: "axiomarket20.firebaseapp.com",
+  projectId: "axiomarket20",
+  storageBucket: "axiomarket20.firebasestorage.app",
+  messagingSenderId: "931549769527",
+  appId: "1:931549769527:web:c5cd7dd6045ef9a72af4b2",
+  measurementId: "G-NC008CYWDL"
 };
 
 const app = initializeApp(firebaseConfig);
