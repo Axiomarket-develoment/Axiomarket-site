@@ -80,7 +80,7 @@ export function SubMarkets({
 
                   onSelectOption?.({
                     outcome: opt.label,
-                    odds: opt.odds,
+                    odds: opt.percentage,
                     subMarketId: sub._id,
                   });
                 };

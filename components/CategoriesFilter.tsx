@@ -24,7 +24,6 @@ const CategoriesFilter: React.FC<Props> = ({
 
     const filter1 = ["Trending", "Crypto", "Meme Coins", "Sports", "Stocks", "X", "Politics", "Entertainment"];
 
-    // 🔥 DYNAMIC FILTER MAP
     const filterMap: Record<string, string[]> = {
         Trending: ["All Markets", "$AVAX", "$BTC", "$ETH", "Chelsea", "Oil", "Trump", "Tesla", "Apple"],
         Crypto: ["All Markets", "$AVAX", "$BTC", "$ETH", "$SOL", "$BNB", "$SUI"],
@@ -40,28 +39,27 @@ const CategoriesFilter: React.FC<Props> = ({
     const [activeFilter1, setActiveFilter1] = useState(filter1[0]);
     const [activeFilter2, setActiveFilter2] = useState("All Markets");
 
-    // 🔥 GET CURRENT SUB FILTERS
     const filter2 = filterMap[activeFilter1] || ["All Markets"];
 
     return (
-        <div className="flex flex-col gap- w-full">
+        <div className="flex  flex-col gap-2 w-full">
 
             {/* Filter 1 */}
-            <div className="flex overflow-x-auto scrollbar-custom pb-2">
+            <div className="flex overflow-x-auto lg:overflow-visible scrollbar-custom pb-2 lg:flex-wrap lg:gap-3">
                 {filter1.map((item) => (
                     <button
                         key={item}
                         onClick={() => {
                             setActiveFilter1(item);
                             setActiveCategory(item);
-
-                            // 🔥 RESET SUB FILTER WHEN CATEGORY CHANGES
                             setActiveSubCategory("All Markets");
                             setActiveFilter2("All Markets");
                             setShowSavedOnly(false);
                         }}
-                        className={`whitespace-nowrap text-sm flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 transform
-              ${item === "Trending" ? "mr-3" : ""}
+                        className={`whitespace-nowrap flex items-center gap-2 rounded-full transition-all duration-300 transform
+              px-3 py-2 text-sm
+              lg:px-4 lg:py-2.5 lg:text-base
+              ${item === "Trending" ? "mr-3 lg:mr-0" : ""}
               ${activeFilter1 === item ? "text-[#FF394A] font-semibold scale-105" : "text-[#8B8B8B] hover:bg-white/10 hover:scale-105"}
             `}
                     >
@@ -80,7 +78,7 @@ const CategoriesFilter: React.FC<Props> = ({
             </div>
 
             {/* Filter 2 */}
-            <div className="flex scrollbar-custom overflow-x-auto gap-1 pb-2 items-center">
+            <div className="flex scrollbar-custom overflow-x-auto lg:overflow-visible gap-2 lg:gap-3 pb-2 lg:flex-wrap items-center">
 
                 {/* Bookmark */}
                 <div
@@ -98,13 +96,13 @@ const CategoriesFilter: React.FC<Props> = ({
                         background:
                             "linear-gradient(#0D0D0D, #0D0D0D) padding-box, linear-gradient(90deg, rgba(255,255,255,0.5), #262626, #000000) border-box",
                     }}
-                    className={`ml-3 relative rounded-full
+                    className={`ml-3 lg:ml-0 relative rounded-full
     bg-gradient-to-r from-[#1B1B1B] to-[#181818]
     p-[1px] shadow-[0_4px_4px_0_rgba(0,0,0,0.25)]
     transition-transform duration-300 hover:scale-110
     ${showSavedOnly ? " ring-[#fff]" : ""}`}
                 >
-                    <div className="bg-[#1E1E1E] rounded-full flex justify-center items-center px-2 py-2 relative w-9 h-9">
+                    <div className="bg-[#1E1E1E] rounded-full flex justify-center items-center px-2 py-2 relative w-9 h-9 lg:w-11 lg:h-11">
                         <MdOutlineBookmarkBorder
                             className={`absolute text-2xl transition-all duration-300
         ${showSavedOnly ? "opacity-0 scale-75" : "opacity-100 scale-100 text-[#C8C8C8]"}`}
@@ -116,7 +114,7 @@ const CategoriesFilter: React.FC<Props> = ({
                     </div>
                 </div>
 
-                {/* 🔥 DYNAMIC SUB FILTERS */}
+                {/* Sub Filters */}
                 {filter2.map((item) => (
                     <button
                         key={item}
@@ -125,7 +123,9 @@ const CategoriesFilter: React.FC<Props> = ({
                             setActiveFilter2(item);
                             setShowSavedOnly(false);
                         }}
-                        className={`whitespace-nowrap px-3 py-2.5 text-sm rounded-full transition-all duration-300 transform
+                        className={`whitespace-nowrap rounded-full transition-all duration-300 transform
+  px-3 py-2.5 text-sm
+  lg:px-4 lg:py-3 lg:text-base
   ${!showSavedOnly && activeFilter2 === item
                                 ? "text-[#E4E4E4] bg-[#0C0C0C] scale-105 font-semibold shadow-md"
                                 : "text-[#8B8B8B] hover:bg-white/20 hover:scale-105"

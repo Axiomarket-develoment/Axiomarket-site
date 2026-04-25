@@ -35,6 +35,7 @@ export default function MarketClient() {
 
   return (
     <div>
+      {/* Mobile background (keep as is) */}
       <div className="fixed inset-0 bg-[#000000] opacity-90 lg:hidden block z-10" />
       <div className="absolute inset-0 lg:hidden z-0">
         <Image
@@ -46,25 +47,34 @@ export default function MarketClient() {
         />
       </div>
 
-      <div className="relative z-20 flex flex-col min-h-[60px]">
-        <MobileNav />
+      {/* ✅ NEW DESKTOP CONTAINER */}
+      <div className="relative z-20 flex justify-center">
+        <div className="w-full  flex flex-col min-h-[60px]">
 
-        <CategoriesFilter
-          activeCategory={activeCategory}
-          setActiveCategory={setActiveCategory}
-          activeSubCategory={activeSubCategory}
-          setActiveSubCategory={setActiveSubCategory}
-          showSavedOnly={showSavedOnly}
-          setShowSavedOnly={setShowSavedOnly}
-        />
+          <MobileNav />
 
-        <Markets
-          activeCategory={activeCategory}
-          activeSubCategory={activeSubCategory}
-          showSavedOnly={showSavedOnly}
-        />
+          <div className="lg:px-30 lg:mb-14">
 
-        <DownBar />
+            <CategoriesFilter
+              activeCategory={activeCategory}
+              setActiveCategory={setActiveCategory}
+              activeSubCategory={activeSubCategory}
+              setActiveSubCategory={setActiveSubCategory}
+              showSavedOnly={showSavedOnly}
+              setShowSavedOnly={setShowSavedOnly}
+            />
+
+          </div>
+
+          <Markets
+            activeCategory={activeCategory}
+            activeSubCategory={activeSubCategory}
+            showSavedOnly={showSavedOnly}
+          />
+
+          <DownBar />
+
+        </div>
       </div>
     </div>
   );

@@ -21,24 +21,33 @@ const DownBar = () => {
         { label: "History", path: "/history", icon: "/img/downbar/db3.svg" },
         { label: "Profile", path: "/profile", icon: "/img/downbar/db4.svg" },
     ];
-   const handleClick = (item: DownBarItem) => {
-    if (item.path === "/history") {
-        const user = localStorage.getItem("user");
-        const token = localStorage.getItem("token");
 
-        if (!user || !token) {
-            toast("Please login to continue");
-
-            setTimeout(() => {
-                router.push("/login");
-            }, 800);
-
+    const handleClick = (item: DownBarItem) => {
+        // 🚫 Block P2P & Profile
+        if (item.path === "/p2p" || item.path === "/profile") {
+            toast("Coming Soon 🚧");
             return;
         }
-    }
 
-    router.push(item.path);
-};
+        // 🔒 Protect History
+        if (item.path === "/history") {
+            const user = localStorage.getItem("user");
+            const token = localStorage.getItem("token");
+
+            if (!user || !token) {
+                toast("Please login to continue");
+
+                setTimeout(() => {
+                    router.push("/login");
+                }, 800);
+
+                return;
+            }
+        }
+
+        // ✅ Normal navigation
+        router.push(item.path);
+    };
 
     return (
         <div className="fixed bottom-8 left-0 w-full flex justify-center md:hidden z-40">
@@ -51,7 +60,7 @@ const DownBar = () => {
                         const isActive =
                             normalize(pathname).includes(normalize(item.path)) ||
                             clicked === item.path;
-                            
+
 
                         return (
                             <div

@@ -1,7 +1,6 @@
 export const MarketSkeleton = () => {
   return (
-    <div className="bg-[#0C0C0C] rounded-2xl p-4 animate-pulse border border-[#1a1a1a]">
-      
+    <div className="w-full bg-[#0C0C0C] rounded-2xl p-4 animate-pulse border border-[#1a1a1a]">
       {/* Header */}
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-[#1a1a1a]" />

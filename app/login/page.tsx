@@ -27,7 +27,7 @@ const Page: React.FC = () => {
   // LOGIN HANDLER
   // ==========================
   const handleLogin = async () => {
-    const res = await apiRequest("/auth/login", {
+    const res = await apiRequest("/user_auth/login", {
       method: "POST",
       body: { email, password },
       showSuccess: true,
@@ -49,7 +49,7 @@ const Page: React.FC = () => {
       return;
     }
 
-    const res = await apiRequest("/auth/signup", {
+    const res = await apiRequest("/user_auth/signup", {
       method: "POST",
       body: {
         email,

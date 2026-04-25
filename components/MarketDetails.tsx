@@ -103,46 +103,89 @@ export default function MarketDetails({ market, logo }: any) {
     };
 
     return (
-        <div className="space-y-6 px-4 pb-35">
+        <div className="px-4 lg:px-30 lg:m-auto lg:mt-20 pb-35">
 
-            {/* ✅ FIXED HERE */}
-            <MarketHeader
-                market={market}
-                userId={userId}   // 👈 CORRECT USER ID
-                isCrypto={isCrypto}
-                logo={logo}
-            />
-
-            {isCrypto && market.metadata?.asset && (
-                <TradingViewWidget
-                    key={mapToTradingViewSymbol(market.metadata.asset)}
-                    symbol={mapToTradingViewSymbol(market.metadata.asset)}
-                    interval={convertInterval(interval)}
+            {/* Header stays full width */}
+            <div className="mb-6">
+                <MarketHeader
+                    market={market}
+                    userId={userId}
+                    isCrypto={isCrypto}
+                    logo={logo}
                 />
-            )}
+            </div>
 
-            {isCrypto && (
-                <MarketStats
+            {/* 🔥 DESKTOP GRID */}
+            <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* LEFT SIDE (Chart + Stats) */}
+                <div className="w-full lg:w-[55%] space-y-6">
+
+                    {isCrypto && market.metadata?.asset && (
+                        <TradingViewWidget
+                            key={mapToTradingViewSymbol(market.metadata.asset)}
+                            symbol={mapToTradingViewSymbol(market.metadata.asset)}
+                            interval={convertInterval(interval)}
+                        />
+                    )}
+
+                    {isCrypto && (
+                        <MarketStats
+                            market={market}
+                            totalVolume={totalVolume}
+                            interval={interval}
+                            setInterval={setInterval}
+                        />
+                    )}
+
+                    {/* Optional: extra info under chart */}
+                    {activeTab === "Chart" && isCrypto && market.metadata && (
+                        <CryptoInfo market={market} />
+                    )}
+
+                </div>
+
+                {/* RIGHT SIDE */}
+                <div className="w-full lg:w-[45%] space-y-6">
+
+                    {/* Tabs */}
+                    <Tabs activeTab={activeTab} onChange={setActiveTab} />
+
+                    {/* SubMarkets */}
+                    <SubMarkets
+                        subMarkets={market.subMarkets}
+                        isSport={isSport}
+                        singleSub={singleSub}
+                        market={market}
+                        onSelectOption={handleSelectOption}
+                    />
+
+                    {/* Conditional tabs */}
+                    {activeTab === "AI" && <AiInsight market={market} />}
+
+                    {activeTab === "Chat" && (
+                        <UserChat conversationId={market.conversationId} />
+                    )}
+
+                    {isSport && <SportTeams event={market.event} />}
+
+                    {market.marketType === "SOCIAL" && (
+                        <SocialInfo market={market} />
+                    )}
+
+                </div>
+            </div>
+
+            {/* Footer stays bottom */}
+            <div className="mt-6">
+                <MarketFooter
                     market={market}
                     totalVolume={totalVolume}
-                    interval={interval}
-                    setInterval={setInterval}
-                />)}
-
-            <div className=" z-50 backdrop-blur-sm pt-2">
-                <Tabs activeTab={activeTab} onChange={setActiveTab} />
-            </div>
-
-            <div className=" z-50 pt-2 backdrop-blur-sm">
-                <SubMarkets
-                    subMarkets={market.subMarkets}
                     isSport={isSport}
-                    singleSub={singleSub}
-                    market={market}
-                    onSelectOption={handleSelectOption}
                 />
             </div>
 
+            {/* Modal stays global */}
             {modalData && (
                 <TriggerOrderModal
                     onClose={() => setModalData(null)}
@@ -153,29 +196,6 @@ export default function MarketDetails({ market, logo }: any) {
                     endDate={market.endDate}
                 />
             )}
-
-            <div style={{ display: activeTab === "AI" ? "block" : "none" }}>
-                <AiInsight market={market} />
-            </div>
-
-            {activeTab === "Chat" && (
-                <UserChat conversationId={market.conversationId} />
-            )}
-
-            {activeTab === "Chart" && isCrypto && market.metadata && (
-                <CryptoInfo market={market} />
-            )}
-
-            {isSport && <SportTeams event={market.event} />}
-            {market.marketType === "SOCIAL" && (
-                <SocialInfo market={market} />
-            )}
-
-            <MarketFooter
-                market={market}
-                totalVolume={totalVolume}
-                isSport={isSport}
-            />
         </div>
     );
 }
