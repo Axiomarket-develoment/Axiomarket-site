@@ -54,21 +54,29 @@ type MarketOption = {
 
 
 const getTimeLeft = (endDate: string, status?: string) => {
-    // 🔥 PRIORITY CHECK
-    if (status === "SETTLED") return "Settled";
+  if (status === "SETTLED") return "Settled";
 
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
+  const now = new Date().getTime();
+  const end = new Date(endDate).getTime();
 
-    const diff = end - now;
+  const diff = end - now;
 
-    if (diff <= 0) return "Ended";
+  if (diff <= 0) return "Ended";
 
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+  const hours = Math.floor(diff / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
+  // ✅ dynamic formatting
+  if (hours > 0) {
     return `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+
+  return `${seconds}s`;
 };
 
 const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initialSaved = false }) => {
@@ -131,7 +139,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
         localStorage.setItem("selectedMarket", JSON.stringify(market));
 
         // Navigate to details page with _id and logo in query params
-        router.push(`/market/details?_id=${market.id}&logo=${logo || ""}`);
+        router.push(`/market/details?_id=${market._id}&logo=${logo || ""}`);
     };
 
     useEffect(() => {
@@ -284,6 +292,47 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                 </Link> */}
                 <div className="flex items-center  gap-2">
 
+                    {/* SPORT LOGOS */}
+                    {isSport && market.event?.participantImages && (
+                        <div
+                        onClick={handleMarketClick}
+                        className="flex items-center justify-between w-full mb-6 ">
+
+                            {/* LEFT TEAM */}
+                            <div className="flex  font-bold items-center ">
+                                <Image
+                                    src={market.event.participantImages?.[0]}
+                                    alt=""
+                                    width={60}
+                                    height={60}
+                                    className="w-10 h-10rounded-full object-cover"
+                                />
+                                <p className="text-[10px] max-w-16 mt-1 mx-2 text-center">
+                                    {market.event.participants?.[0]}
+                                </p>
+                            </div>
+
+                            {/* VS CENTER */}
+                            <div className="flex  flex-col items-center justify-center">
+                                <span className="text-xs text-gray-400 font-semibold">VS</span>
+                            </div>
+
+                            {/* RIGHT TEAM */}
+                            <div className="flex  items-center">
+                                <p className="text-[10px] max-w-16 mx-2 font-bold mt-1 text-center">
+                                    {market.event.participants?.[1]}
+                                </p>
+                                <Image
+                                    src={market.event.participantImages?.[1]}
+                                    alt=""
+                                    width={60}
+                                    height={60}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                />
+                            </div>
+
+                        </div>
+                    )}
 
                     {/* CRYPTO LOGO */}
                     {isCrypto && (
@@ -358,7 +407,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                                             <button
                                                 key={j}
                                                 onClick={(e) => handleOptionClick(e, opt.label, opt.percentage)}
-                                                className={`flex-1 w-full flex justify-center items-center gap-1 py-4 bg-[#222] hover:bg-[#333] transition p-1 rounded-md text-xs ${textColor} relative z-20`}
+                                                className={`flex-1 w-full flex justify-center items-center gap-1 py-3 bg-[#222] hover:bg-[#333] transition p-1 rounded-full text-xs ${textColor} relative z-20`}
                                             >
                                                 <div>{opt.label}</div>
                                                 <p>-</p>
@@ -388,7 +437,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                         <p>${formatCompact(totalVolume)}</p>
                     </div>
 
-                    <div className="flex mt-4 gap-2 -mb-2 items-center">
+                    <div className="flex mt-4 gap-2  text-xs -mb-2 items-center">
                         <p>
                             {timeText === "Settled"
                                 ? "Settled"

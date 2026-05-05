@@ -36,6 +36,31 @@ body {
 }
 
 
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.6);
+}
+
+/* Chrome, Edge, Safari */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 4px; /* 👈 reduce thickness */
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #333;
+  border-radius: 10px;
+}
+
+/* Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin; /* 👈 makes it smaller */
+  scrollbar-color: #333 transparent;
+}
+
 
 
 /*  Custom Scroll bar */

@@ -8,9 +8,9 @@ import toast from "react-hot-toast";
 import { convertBalanceToUSD } from "@/utils/getAvaxPrice";
 import { setLocalStorage } from "@/utils/localStorage";
 
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebaseClient";
-import SuccessScreen from "./SuccessScreen";
+// import { doc, onSnapshot } from "firebase/firestore";
+// import { db } from "@/lib/firebaseClient";
+// import SuccessScreen from "./SuccessScreen";
 
 interface Props {
     onClose?: () => void;
@@ -61,21 +61,13 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
 
         if (!userStr) return;
 
-        const user = JSON.parse(userStr);
-        const userId = user?._id;
+        try {
+            const user = JSON.parse(userStr);
 
-        if (!userId) return;
-
-        const ref = doc(db, "users", userId);
-
-        const unsub = onSnapshot(ref, (snap) => {
-            if (snap.exists()) {
-                const data = snap.data();
-                setAvaxBalance(Number(data?.avaxBalance ?? 0));
-            }
-        });
-
-        return () => unsub();
+            setAvaxBalance(Number(user?.avaxBalance ?? 0));
+        } catch (err) {
+            console.error("Failed to parse user:", err);
+        }
     }, []);
 
     useEffect(() => {
@@ -92,6 +84,14 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
     const handleSubmit = async () => {
         if (status === "loading") return;
 
+
+        const subMarketId = market.subMarkets?.[0]?._id;
+
+        if (!subMarketId) {
+            toast.error("Invalid market structure");
+            return;
+        }
+
         setShowWave(true);
 
         const token = localStorage.getItem("token") || "";
@@ -101,7 +101,17 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
             return;
         }
 
-        if (amount > avaxBalance) {
+        const userStr = localStorage.getItem("user");
+
+        if (!userStr) {
+            toast.error("User not found");
+            return;
+        }
+
+        const user = JSON.parse(userStr);
+        const realBalance = Number(user?.avaxBalance ?? 0);
+
+        if (amount > realBalance) {
             toast.error("Insufficient balance");
             return;
         }
@@ -115,26 +125,36 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
         setStatus("loading");
 
         try {
-            const usdAmount = await convertBalanceToUSD(amount);
 
             const response = await apiRequest("/user_market/user_enter_market", {
                 method: "POST",
                 body: {
-                    marketId: market.id,
                     token,
-                    subMarketId: market.subMarkets[0].id,
+                    marketId: market._id,
+                    subMarketId: market.subMarkets?.[0]?._id,
                     outcome,
                     price: odds,
-                    amount: usdAmount,
+                    amount,
                 },
             });
-            if (response.success) {
-                setLocalStorage("cachedBalance", response.data.balance.testnet);
-                setLocalStorage("user", response.data.user);
+            if (response.success && response.data?.data) {
+                const { user, balance } = response.data.data;
 
+
+                if (balance?.testnet !== undefined) {
+                    setLocalStorage("cachedBalance", balance.testnet);
+                }
+
+
+                console.log("API Response User:", user);
+                if (user) {
+
+                    // ✅ overwrite completely with fresh backend state
+                    localStorage.setItem("user", JSON.stringify(user));
+                }
+
+                setStatus("success");
                 onSuccess?.();
-
-              
                 return;
             }
             else {

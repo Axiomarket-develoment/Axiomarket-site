@@ -68,6 +68,8 @@ export default function Page() {
       router.replace("/home");
     } else {
       router.replace("/market");
+
+       
     }
   }, [router]);
 

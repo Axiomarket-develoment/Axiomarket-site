@@ -1,6 +1,23 @@
 export type MarketType = "CRYPTO" | "SOCIAL" | "SPORT";
 export type MarketStatus = "PENDING" | "LIVE" | "ENDED" | "SETTLED";
 
+
+export type FieldType = "text" | "number" | "select" | "time";
+
+export interface Field {
+  key: string;
+  type: FieldType;
+  placeholder?: string;
+  options?: any[];
+}
+
+export interface Template {
+  label?: string;
+  template: string;
+  fields: Field[];
+}
+
+
 export interface outcomes {
   label: string;
   liquidity: number;
@@ -57,6 +74,7 @@ export interface Market {
   subMarkets: SubMarket[];
   startDate: string;
   endDate: string;
+  savedMarkets: string[]
   durationMinutes: number;
   conversationId: string;
   event?: Event;

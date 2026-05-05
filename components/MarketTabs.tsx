@@ -1,22 +1,48 @@
 "use client";
 import { motion } from "framer-motion";
 
+export type Tab = "Chart" | "AI" | "Chat";
+
 interface TabsProps {
   activeTab: Tab;
   onChange: (tab: Tab) => void;
+  hideChart?: boolean;
 }
 
-export type Tab = "Chart" | "AI" | "Chat";
-
-export function Tabs({ activeTab, onChange }: TabsProps) {
-  const tabs: { label: Tab; icon: string; activeIcon: string }[] = [
-    { label: "Chart", icon: "/img/market/chart.svg", activeIcon: "/img/market/achart.svg" },
-    { label: "AI", icon: "/img/market/ai.svg", activeIcon: "/img/market/aai.svg" },
-    { label: "Chat", icon: "/img/market/chat.svg", activeIcon: "/img/market/achat.svg" },
-  ];
+export function Tabs({ activeTab, onChange, hideChart }: TabsProps) {
+  const tabs: { label: Tab; icon: string; activeIcon: string }[] = hideChart
+    ? [
+        {
+          label: "AI",
+          icon: "/img/market/ai.svg",
+          activeIcon: "/img/market/aai.svg",
+        },
+        {
+          label: "Chat",
+          icon: "/img/market/chat.svg",
+          activeIcon: "/img/market/achat.svg",
+        },
+      ]
+    : [
+        {
+          label: "Chart",
+          icon: "/img/market/chart.svg",
+          activeIcon: "/img/market/achart.svg",
+        },
+        {
+          label: "AI",
+          icon: "/img/market/ai.svg",
+          activeIcon: "/img/market/aai.svg",
+        },
+        {
+          label: "Chat",
+          icon: "/img/market/chat.svg",
+          activeIcon: "/img/market/achat.svg",
+        },
+      ];
 
   return (
-    <div className="flex gap-2 w-full justify-between relative">
+    <div className="flex gap-2 w-full justify-between">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.label;
 
@@ -26,20 +52,18 @@ export function Tabs({ activeTab, onChange }: TabsProps) {
             onClick={() => onChange(tab.label)}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            layout
-            className={`flex items-center rounded-full w-full gap-1 px-4 py-4 justify-center font-semibold transition-colors duration-300 ${isActive
-              ? "text-white bg-[#FF394A] shadow-lg"
-              : "text-[#8B8B8B] bg-[#0C0C0C] hover:text-white hover:bg-[#1f1f1f]"
-              }`}
+            className={`flex items-center w-full gap-2 px-4 py-3 justify-center rounded-full font-semibold ${
+              isActive
+                ? "text-white bg-[#FF394A]"
+                : "text-[#8B8B8B] bg-[#0C0C0C]"
+            }`}
           >
-            <motion.img
+            <img
               src={isActive ? tab.icon : tab.activeIcon}
-              alt={tab.label}
               className="w-5 h-5"
-              animate={{ rotate: isActive ? 15 : 0 }}
-              transition={{ type: "spring", stiffness: 300 }}
+              alt={tab.label}
             />
-            <p className="text-sm">{tab.label}</p>
+            <span className="text-sm">{tab.label}</span>
           </motion.button>
         );
       })}

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { CryptoInfo } from "./CryptoInfo";
-import { TradingViewRechart } from "./LiveChart";
 import { MarketFooter } from "./MarketFooter";
 import { MarketHeader } from "./MarketHeader";
 import { MarketStats } from "./MarketStats";
@@ -16,10 +15,7 @@ import UserChat from "./ChatRoom";
 import TradingViewWidget from "./TradingViewWidget";
 
 function normalizeAsset(asset: string) {
-    return asset
-        ?.toLowerCase()
-        ?.replace("$", "")
-        ?.trim();
+    return asset?.toLowerCase()?.replace("$", "")?.trim();
 }
 
 function mapToTradingViewSymbol(asset: string) {
@@ -28,21 +24,16 @@ function mapToTradingViewSymbol(asset: string) {
     const map: Record<string, string> = {
         bitcoin: "BINANCE:BTCUSDT",
         btc: "BINANCE:BTCUSDT",
-
         ethereum: "BINANCE:ETHUSDT",
         eth: "BINANCE:ETHUSDT",
-
         solana: "BINANCE:SOLUSDT",
         sol: "BINANCE:SOLUSDT",
-
         dogecoin: "BINANCE:DOGEUSDT",
         doge: "BINANCE:DOGEUSDT",
-
         avalanche: "BINANCE:AVAXUSDT",
         avax: "BINANCE:AVAXUSDT",
-
         "avalanche-coin": "BINANCE:AVAXUSDT",
-
+        "avalanche-2": "BINANCE:AVAXUSDT",
         binancecoin: "BINANCE:BNBUSDT",
         bnb: "BINANCE:BNBUSDT",
     };
@@ -63,31 +54,41 @@ function convertInterval(interval: string) {
 }
 
 export default function MarketDetails({ market, logo }: any) {
-    const [activeTab, setActiveTab] = useState<Tab>("Chart");
+    const isSport = market.marketType === "SPORT";
+    const isCrypto = market.marketType === "CRYPTO";
+
+    // ✅ SMART DEFAULT TAB
+    const defaultTab: Tab = isCrypto
+        ? "Chart"
+        : isSport
+            ? "Chat"
+            : "Chart";
+
+    const [activeTab, setActiveTab] = useState<Tab>(defaultTab);
     const [modalData, setModalData] = useState<any>(null);
-    const [userId, setUserId] = useState<string | null>(null); // 👈 ADD THIS
+    const [userId, setUserId] = useState<string | null>(null);
     const [interval, setInterval] = useState("5m");
 
-    // ✅ GET USER FROM LOCAL STORAGE
+    // ✅ FIX: ensure invalid tabs never stay active
+    useEffect(() => {
+        if (isSport && activeTab === "Chart") {
+            setActiveTab("AI");
+        }
+    }, [isSport, activeTab]);
+
+    // ✅ GET USER
     useEffect(() => {
         const userStr = localStorage.getItem("user");
 
         if (userStr) {
             try {
                 const user = JSON.parse(userStr);
-                if (user?._id) {
-                    setUserId(user._id);
-                } else {
-                    console.warn("User has no _id");
-                }
+                if (user?._id) setUserId(user._id);
             } catch (err) {
                 console.error("Failed to parse user", err);
             }
         }
     }, []);
-
-    const isSport = market.marketType === "SPORT";
-    const isCrypto = market.marketType === "CRYPTO";
 
     const totalVolume = market.subMarkets.reduce(
         (acc: number, sub: any) => acc + sub.totalVolume,
@@ -105,7 +106,7 @@ export default function MarketDetails({ market, logo }: any) {
     return (
         <div className="px-4 lg:px-30 lg:m-auto lg:mt-20 pb-35">
 
-            {/* Header stays full width */}
+            {/* HEADER */}
             <div className="mb-6">
                 <MarketHeader
                     market={market}
@@ -115,19 +116,24 @@ export default function MarketDetails({ market, logo }: any) {
                 />
             </div>
 
-            {/* 🔥 DESKTOP GRID */}
+            {/* SPORT */}
+            {/* {isSport && <SportTeams event={market.event} />} */}
+            {/* MAIN GRID */}
             <div className="flex flex-col lg:flex-row gap-6">
 
-                {/* LEFT SIDE (Chart + Stats) */}
+                {/* LEFT */}
                 <div className="w-full lg:w-[55%] space-y-6">
 
-                    {isCrypto && market.metadata?.asset && (
-                        <TradingViewWidget
-                            key={mapToTradingViewSymbol(market.metadata.asset)}
-                            symbol={mapToTradingViewSymbol(market.metadata.asset)}
-                            interval={convertInterval(interval)}
-                        />
-                    )}
+                    {/* CHART ONLY WHEN ALLOWED */}
+                    {activeTab === "Chart" &&
+                        isCrypto &&
+                        market.metadata?.asset && (
+                            <TradingViewWidget
+                                key={mapToTradingViewSymbol(market.metadata.asset)}
+                                symbol={mapToTradingViewSymbol(market.metadata.asset)}
+                                interval={convertInterval(interval)}
+                            />
+                        )}
 
                     {isCrypto && (
                         <MarketStats
@@ -138,20 +144,22 @@ export default function MarketDetails({ market, logo }: any) {
                         />
                     )}
 
-                    {/* Optional: extra info under chart */}
                     {activeTab === "Chart" && isCrypto && market.metadata && (
                         <CryptoInfo market={market} />
                     )}
-
                 </div>
 
-                {/* RIGHT SIDE */}
+                {/* RIGHT */}
                 <div className="w-full lg:w-[45%] space-y-6">
 
-                    {/* Tabs */}
-                    <Tabs activeTab={activeTab} onChange={setActiveTab} />
+                    {/* TABS (NO STYLE CHANGE) */}
+                    <Tabs
+                        activeTab={activeTab}
+                        hideChart={isSport}
+                        onChange={setActiveTab}
+                    />
 
-                    {/* SubMarkets */}
+                    {/* SUB MARKETS */}
                     <SubMarkets
                         subMarkets={market.subMarkets}
                         isSport={isSport}
@@ -159,33 +167,49 @@ export default function MarketDetails({ market, logo }: any) {
                         market={market}
                         onSelectOption={handleSelectOption}
                     />
+                    {
+                        isSport && (
+                            <div className="mt-6">
+                                <MarketFooter
+                                    market={market}
+                                    totalVolume={totalVolume}
+                                    isSport={isSport}
+                                />
+                            </div>
+                        )
+                    }
 
-                    {/* Conditional tabs */}
+                    {/* AI */}
                     {activeTab === "AI" && <AiInsight market={market} />}
 
+                    {/* CHAT */}
                     {activeTab === "Chat" && (
                         <UserChat conversationId={market.conversationId} />
                     )}
 
-                    {isSport && <SportTeams event={market.event} />}
 
+
+                    {/* SOCIAL */}
                     {market.marketType === "SOCIAL" && (
                         <SocialInfo market={market} />
                     )}
-
                 </div>
             </div>
 
-            {/* Footer stays bottom */}
-            <div className="mt-6">
-                <MarketFooter
-                    market={market}
-                    totalVolume={totalVolume}
-                    isSport={isSport}
-                />
-            </div>
+            {/* FOOTER */}
+            {
+                isCrypto && (
+                    <div className="mt-6">
+                        <MarketFooter
+                            market={market}
+                            totalVolume={totalVolume}
+                            isSport={isSport}
+                        />
+                    </div>
+                )
+            }
 
-            {/* Modal stays global */}
+            {/* MODAL */}
             {modalData && (
                 <TriggerOrderModal
                     onClose={() => setModalData(null)}

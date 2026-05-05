@@ -78,7 +78,7 @@ const CategoriesFilter: React.FC<Props> = ({
             </div>
 
             {/* Filter 2 */}
-            <div className="flex scrollbar-custom overflow-x-auto lg:overflow-visible gap-2 lg:gap-3 pb-2 lg:flex-wrap items-center">
+            <div className="flex scrollbar-custom overflow-x-auto lg:overflow-visible gap-1 lg:gap-3 pb-2 lg:flex-wrap items-center">
 
                 {/* Bookmark */}
                 <div
@@ -124,7 +124,7 @@ const CategoriesFilter: React.FC<Props> = ({
                             setShowSavedOnly(false);
                         }}
                         className={`whitespace-nowrap rounded-full transition-all duration-300 transform
-  px-3 py-2.5 text-sm
+  px-3 py-2.5 text-xs
   lg:px-4 lg:py-3 lg:text-base
   ${!showSavedOnly && activeFilter2 === item
                                 ? "text-[#E4E4E4] bg-[#0C0C0C] scale-105 font-semibold shadow-md"

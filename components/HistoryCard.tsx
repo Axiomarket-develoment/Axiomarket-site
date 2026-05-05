@@ -49,7 +49,7 @@ const HistoryCard: React.FC<Props> = ({ history }) => {
             animate={{ opacity: 1, y: 0 }}
             whileHover={{ scale: 1.02 }}
             transition={{ duration: 0.25 }}
-            className='bg-[#090909] w-full border px-3 rounded-lg py-3 border-white/5 my-3'
+            className='bg-[#090909] w-full border px-3 rounded-lg py-3 border-white/5 '
         >
             {image && (
                 <img

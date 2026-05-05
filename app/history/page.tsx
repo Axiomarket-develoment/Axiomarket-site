@@ -187,7 +187,7 @@ export default function HistoryPage() {
             <MobileNav />
             <DownBar />
 
-            <div className="p-5">
+            <div className="p-3">
                 {!historyItems.length ? (
                     <div className="flex flex-col items-center justify-center mt-20 text-center">
                         <Image
@@ -311,7 +311,7 @@ export default function HistoryPage() {
                         </div>
 
                         {/* Cards */}
-                        <motion.div className="flex flex-col gap-3 mt-4">
+                        <motion.div className="flex flex-col g mt-4">
                             <AnimatePresence mode="wait">
                                 <motion.div
                                     key={activeTab}

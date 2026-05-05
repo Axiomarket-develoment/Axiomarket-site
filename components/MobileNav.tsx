@@ -1,13 +1,18 @@
 "use client";
 
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/firebaseClient";
 import toast from "react-hot-toast";
 import { FiLogOut } from "react-icons/fi";
 import { motion, AnimatePresence } from "framer-motion";
+import { io } from "socket.io-client";
+import { API_URL } from "@/utils/apiRequest";
+import { FaPlus } from "react-icons/fa";
+
+import { GoPlus } from "react-icons/go";
+import CreateMarket from "./CreateMarket";
+
 
 const MobileNav = () => {
   const pathname = usePathname();
@@ -22,65 +27,151 @@ const MobileNav = () => {
 
   const [mounted, setMounted] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(!!token && !!userStr);
-  const [avaxBalance, setAvaxBalance] = useState<string>("0.0");
-
-  // ✅ NEW: logout modal state
+  const [loggingOut, setLoggingOut] = useState(false);
+  const [user, setUser] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showComingSoon, setShowComingSoon] = useState(false);
 
+  const [showCreateMarket, setShowCreateMarket] = useState(false);
+
+  // ✅ keep single socket instance
+  const socketRef = useRef<any>(null);
+
+  // =========================
+  // INIT USER
+  // =========================
   useEffect(() => {
     setMounted(true);
 
-    if (!token || !userStr) {
+    const userStr = localStorage.getItem("user");
+    const token = localStorage.getItem("token");
+
+    if (!userStr || !token) {
       setIsLoggedIn(false);
       return;
     }
 
     try {
-      const user = JSON.parse(userStr);
-      const userId = user?._id;
+      const parsedUser = JSON.parse(userStr);
 
-      if (!userId) {
-        setIsLoggedIn(false);
-        return;
-      }
-
+      setUser(parsedUser);
       setIsLoggedIn(true);
-
-      const ref = doc(db, "users", userId);
-
-      const unsubscribe = onSnapshot(ref, (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          setAvaxBalance(data?.avaxBalance ?? "0.0");
-        }
-      });
-
-      return () => unsubscribe();
     } catch (err) {
       console.error("User parse error:", err);
       setIsLoggedIn(false);
     }
-  }, [token, userStr]);
+  }, []);
+
+  // =========================
+  // LOCAL STORAGE SYNC
+  // =========================
+  useEffect(() => {
+    const sync = () => {
+      const userStr = localStorage.getItem("user");
+      if (userStr) setUser(JSON.parse(userStr));
+    };
+
+    window.addEventListener("storage", sync);
+
+    return () => window.removeEventListener("storage", sync);
+  }, []);
+
+  // =========================
+  // 🔥 SOCKET CONNECTION
+  // =========================
+  useEffect(() => {
+    if (!user?._id) return;
+
+    if (socketRef.current) return;
+
+    // console.log("🔌 Connecting socket...");
+
+    const socket = io(API_URL, {
+      transports: ["websocket"],
+    });
+
+    socketRef.current = socket;
+
+    socket.on("connect", () => {
+      // console.log("✅ Socket connected:", socket.id);
+
+      // ✅ MUST MATCH BACKEND
+      socket.emit("auth", user._id);
+    });
+
+    // ✅ MUST MATCH BACKEND EMIT EVENT NAME
+    socket.on("balance-update", (data: any) => {
+      console.log("💰 Balance update received:", data);
+
+      setUser((prev: any) => {
+        if (!prev) return prev;
+
+        const updatedUser = {
+          ...prev,
+
+          // ✅ IMPORTANT: update nested balance object
+          balance: {
+            ...prev.balance,
+            testnet: data.testnet,
+            locked: data.locked,
+          },
+
+          // optional derived value
+          avaxBalance: data.avaxBalance,
+        };
+
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+
+        return updatedUser;
+      });
+    });
+
+    return () => {
+      socket.disconnect();
+      socketRef.current = null;
+    };
+  }, [user?._id]);
+
+
+  // LOGOUT
 
   const handleLogout = () => {
-    // 🔥 Clear EVERYTHING in localStorage
-    localStorage.clear();
-
-    toast.success("Logged out successfully");
-
+    setLoggingOut(true);
 
     setTimeout(() => {
+      localStorage.clear();
+
+      if (socketRef.current) {
+        socketRef.current.disconnect();
+        socketRef.current = null;
+      }
+
+      toast.success("Logged out successfully");
+
+      setLoggingOut(false);
+
       router.push("/login");
-    }, 800);
+    }, 2000);
   };
+
+
 
   useEffect(() => {
     setShowLogoutModal(false);
   }, [pathname]);
 
+
   return (
     <div className="w-full flex justify-center">
 
+      <CreateMarket
+        open={showCreateMarket}
+        onClose={() => setShowCreateMarket(false)}
+        onSubmit={() => {
+          setShowCreateMarket(false);
+          setShowComingSoon(true);
+        }}
+      />
       <div className="flex justify-between items-center w-full p-3 lg:px-30">
 
         {/* LEFT */}
@@ -93,7 +184,6 @@ const MobileNav = () => {
             src="/img/market/logofull.svg"
           />
 
-          {/* DESKTOP NAV */}
           <div className="hidden lg:flex items-center gap-6">
             <p className="text-sm text-[#8B8B8B]">Market</p>
             <p className="text-sm text-[#8B8B8B]">P2P</p>
@@ -102,12 +192,37 @@ const MobileNav = () => {
           </div>
         </div>
 
+
+
         {/* RIGHT */}
         <div className="flex items-center gap-1">
 
+
+
+          <div
+            onClick={() => {
+              // temporary switch
+              const featureLive = true;
+
+              if (featureLive) {
+                setShowCreateMarket(true);
+              } else {
+                setShowComingSoon(true);
+              }
+            }} className="h-6 w-6 flex justify-center items-center rounded-full cursor-pointer hover:scale-105 transition"
+            style={{
+              border: "1px solid transparent",
+              background:
+                "linear-gradient(#0D0D0D, #0D0D0D) padding-box, linear-gradient(90deg, rgba(255,255,255,0.5), #262626, #000000) border-box",
+            }}
+          >
+            <GoPlus className="text-white/40 text-base" />
+          </div>
+
+
           {/* BALANCE */}
           <div
-            className="px-3 py-1 gap-2 flex items-center rounded-full text-sm font-medium cursor-pointer"
+            className="px-2 -mr-1 py-1 gap-2 flex items-center rounded-full text-sm font-medium cursor-pointer"
             style={{
               border: "1px solid transparent",
               background:
@@ -118,17 +233,17 @@ const MobileNav = () => {
             }}
           >
             {!mounted ? (
-              <div className="w-16 h-4 bg-gray-700 animate-pulse rounded" />
+              <div className="w-fit h-4 bg-gray-700 animate-pulse rounded" />
             ) : isLoggedIn ? (
               <>
                 <Image
-                  width={20}
-                  height={20}
+                  width={16}
+                  height={16}
                   alt="AVAX"
                   src="/img/market/avax.svg"
                 />
-                <p className="text-sm font-light text-white">
-                  {avaxBalance}
+                <p className="text-xs font-light text-white">
+                  {user?.avaxBalance ?? "0.0"}
                 </p>
               </>
             ) : (
@@ -137,21 +252,19 @@ const MobileNav = () => {
               </p>
             )}
           </div>
-
-          {/* 🔥 LOGOUT ICON */}
+          {/* LOGOUT */}
           {isLoggedIn && (
             <button
               onClick={() => setShowLogoutModal(true)}
               className="p-2 rounded-full hover:bg-white/10 transition"
             >
-              <FiLogOut className="text-white/50 text-lg" />
+              <FiLogOut className="text-white/40 text-sm" />
             </button>
           )}
         </div>
-
       </div>
 
-      {/* 🔥 LOGOUT MODAL */}
+      {/* LOGOUT MODAL */}
       <AnimatePresence>
         {showLogoutModal && (
           <motion.div
@@ -167,7 +280,6 @@ const MobileNav = () => {
               exit={{ scale: 0.8, y: 30, opacity: 0 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
             >
-
               <h2 className="text-white text-lg font-semibold mb-3">
                 Confirm Logout
               </h2>
@@ -177,7 +289,6 @@ const MobileNav = () => {
               </p>
 
               <div className="flex gap-3 justify-end">
-
                 <button
                   onClick={() => setShowLogoutModal(false)}
                   className="px-4 py-2 rounded-lg bg-[#1a1a1a] text-white text-sm"
@@ -187,17 +298,75 @@ const MobileNav = () => {
 
                 <button
                   onClick={handleLogout}
-                  className="px-4 py-2 rounded-lg bg-[#FF394A] text-white text-sm"
+                  disabled={loggingOut}
+                  className="px-4 py-2 rounded-lg bg-[#FF394A] text-white text-sm flex items-center gap-2 justify-center min-w-[90px]"
                 >
-                  Logout
+                  {loggingOut ? (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  ) : (
+                    "Logout"
+                  )}
                 </button>
-
               </div>
-
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {showComingSoon && (
+          <motion.div
+            className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowComingSoon(false)}
+          >
+            <motion.div
+              className="relative w-[90%] max-w-sm rounded-3xl p-6 text-center border border-white/10 bg-gradient-to-b from-[#0f0f0f] to-[#070707] shadow-2xl"
+              initial={{ scale: 0.7, y: 40, opacity: 0 }}
+              animate={{ scale: 1, y: 0, opacity: 1 }}
+              exit={{ scale: 0.7, y: 40, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* glow orb */}
+              <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-24 h-24 bg-purple-500/30 blur-2xl rounded-full" />
+
+              {/* icon */}
+              <div className="flex justify-center mb-4">
+                <div className="w-14 h-14 rounded-full bg-white/5 flex items-center justify-center border border-white/10">
+                  🚀
+                </div>
+              </div>
+
+              {/* title */}
+              <h2 className="text-white text-lg font-semibold">
+                Market Creation
+              </h2>
+
+              {/* subtitle */}
+              <p className="text-gray-400 text-sm mt-2">
+                This feature is coming soon. We’re building something powerful for you.
+              </p>
+
+              {/* badge */}
+              <div className="mt-4 inline-flex px-3 py-1 rounded-full text-xs text-white/70 bg-white/5 border border-white/10">
+                In Development
+              </div>
+
+              {/* button */}
+              <button
+                onClick={() => setShowComingSoon(false)}
+                className="mt-6 w-full py-2 rounded-xl bg-white text-black text-sm font-medium hover:opacity-90 transition"
+              >
+                Got it
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
 
     </div>
   );

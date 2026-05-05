@@ -28,11 +28,16 @@ export default function CountdownTimer({ endDate }: CountdownProps) {
 
 // Helper to calculate remaining time
 function getTimeRemaining(endDate: string) {
-  const total = new Date(endDate).getTime() - new Date().getTime();
-  const seconds = Math.floor((total / 1000) % 60);
-  const minutes = Math.floor((total / 1000 / 60) % 60);
-  const hours = Math.floor((total / 1000 / 60 / 60) % 24);
-  const days = Math.floor(total / 1000 / 60 / 60 / 24);
+  const ONE_HOUR = 3600000;
 
-  return { total, days, hours, minutes, seconds };
+  const total = new Date(endDate).getTime() - new Date().getTime();
+
+  const adjustedTotal = total ; // 🔥 apply shift AFTER
+
+  const seconds = Math.floor((adjustedTotal / 1000) % 60);
+  const minutes = Math.floor((adjustedTotal / 1000 / 60) % 60);
+  const hours = Math.floor((adjustedTotal / 1000 / 60 / 60));
+  const days = Math.floor(adjustedTotal / 1000 / 60 / 60 / 24);
+
+  return { total: adjustedTotal, days, hours, minutes, seconds };
 }

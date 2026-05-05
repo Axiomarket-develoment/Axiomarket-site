@@ -12,14 +12,14 @@ export default function AiInsight({ market }: AiInsightProps) {
   const [insight, setInsight] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const localStorageKey = `aiInsight_${market.id}`;
+  const localStorageKey = `aiInsight_${market._id}`;
   const hasFetched = useRef(false);
 
   // ---------------------------
   // FETCH AI INSIGHT (ONCE)
   // ---------------------------
   useEffect(() => {
-    if (!market?.id) return;
+    if (!market?._id) return;
     if (hasFetched.current) return;
 
     const cached = localStorage.getItem(localStorageKey);
@@ -33,6 +33,7 @@ export default function AiInsight({ market }: AiInsightProps) {
     const fetchInsight = async () => {
       setLoading(true);
 
+      console.log("on")
       try {
         const { success, data } = await apiRequest(`/ai/ai-insight`, {
           method: "POST",

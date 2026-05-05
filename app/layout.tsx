@@ -8,6 +8,7 @@ import Navbar from "@/components/Navbar";
 import BottomBar from "@/components/BottomBar";
 import { Toaster } from "react-hot-toast";
 import { GoogleOAuthProvider } from "@react-oauth/google";
+import MobileNav from "@/components/MobileNav";
 
 export const poppins = Poppins({
   weight: ["400"], // or specify the weights you need, e.g. ["400", "700"]
@@ -78,6 +79,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {children}
           </GoogleOAuthProvider>
         </main>
+
+        {/* 🔥 MOBILE NAV GLOBAL */}
+
         <Toaster
           position="top-right"
           toastOptions={{
