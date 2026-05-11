@@ -8,11 +8,11 @@ import { motion, AnimatePresence } from "framer-motion";
 type Category =
   | "Crypto"
   | "Meme Coins"
-  | "Sports"
-  | "Stocks"
+  | "Football"
+  // | "Stocks"
   | "X"
-  | "Politics"
-  | "Entertainment";
+  // | "Politics"
+  // | "Entertainment";
 
 interface Props {
   MARKET_TYPES: Category[];

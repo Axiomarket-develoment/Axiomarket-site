@@ -22,8 +22,8 @@ const Waitlist = () => {
       );
 
       if (success) {
-        setSlotsLeft(data.ambassadorSlots);
-        setPercentage(data.percent); // 🔥 IMPORTANT
+        setSlotsLeft(data.slots);
+        setPercentage(data.marketPercent); // 🔥 IMPORTANT
       }
     };
 
@@ -38,8 +38,8 @@ const Waitlist = () => {
     );
 
     if (success) {
-      setSlotsLeft(data.ambassadorSlots);
-      setPercentage(data.percent);
+      setSlotsLeft(data.slots);
+      setPercentage(data.marketPercent);
     }
   };
 
@@ -119,7 +119,7 @@ const Waitlist = () => {
             Take your Finance From Zero to Hero
           </p>
           <p className="mt-4 text-sm lg:text-base text-gray-300">
-            Axiomarket is coming soon. Join Ambassador Program to get {percentage}% on Every Market you create on Axiomarket.
+            Axiomarket is coming soon. Join KOLs Program to get {percentage}% on Every Market you create on Axiomarket.
           </p>
 
 

@@ -4,11 +4,11 @@ import { Template } from "@/data/market";
 type Category =
   | "Crypto"
   | "Meme Coins"
-  | "Sports"
-  | "Stocks"
+  | "Football"
+//   | "Stocks"
   | "X"
-  | "Politics"
-  | "Entertainment";
+//   | "Politics"
+//   | "Entertainment";
 
 
 export const TEMPLATES: Partial<Record<Category, Template[]>> = {
@@ -200,98 +200,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
     ]
     ,
 
-    // Crypto: [
-    //     {
-    //         label: "Price Above",
-    //         template: "Will {token} be above ${price} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-    //             { key: "price", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Price Below",
-    //         template: "Will {token} fall below ${price} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-    //             { key: "price", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Price Range",
-    //         template: "Will {token} stay between ${low} and ${high} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "low", type: "number" },
-    //             { key: "high", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Percentage Move",
-    //         template: "Will {token} move more than {percent}% {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-    //             { key: "percent", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Market Cap",
-    //         template: "Will {token} market cap exceed ${cap} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "cap", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Volume Spike",
-    //         template: "Will {token} volume exceed ${amount} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "amount", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "ATH Break",
-    //         template: "Will {token} break its all-time high {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Daily Close",
-    //         template: "Will {token} close above ${price} {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "price", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Dominance",
-    //         template: "Will {token} dominance exceed {percent}% {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC"] },
-    //             { key: "percent", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    //     {
-    //         label: "Volatility",
-    //         template: "Will {token} volatility exceed {percent}% {timePhrase}?",
-    //         fields: [
-    //             { key: "token", type: "select", options: ["BTC", "ETH"] },
-    //             { key: "percent", type: "number" },
-    //             { key: "timePhrase", type: "time" },
-    //         ],
-    //     },
-    // ],
+  
 };
 
 export const SUGGESTIONS: Record<string, any> = {

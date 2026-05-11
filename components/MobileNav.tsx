@@ -11,7 +11,7 @@ import { API_URL } from "@/utils/apiRequest";
 import { FaPlus } from "react-icons/fa";
 
 import { GoPlus } from "react-icons/go";
-import CreateMarket from "./CreateMarket";
+import CreateMarket from "./createmarket/CreateMarket";
 
 
 const MobileNav = () => {
@@ -93,7 +93,7 @@ const MobileNav = () => {
     socketRef.current = socket;
 
     socket.on("connect", () => {
-      // console.log("✅ Socket connected:", socket.id);
+      console.log("✅ Socket connected:", socket.id);
 
       // ✅ MUST MATCH BACKEND
       socket.emit("auth", user._id);
