@@ -1,18 +1,16 @@
 "use client";
 
-import { Template } from "@/data/market";
+import { MarketCategory, Template } from "@/data/market";
 import CategorySelect from "../CategorySelect";
 
-type Category = "Crypto" | "Meme Coins" | "Football" | "X";
-
 interface Props {
-  category: Category;
-  setCategory: (c: Category) => void;
+  category: MarketCategory;
+  setCategory: (c: MarketCategory) => void;
   setTemplate: (t: Template | null) => void;
   setValues: (v: Record<string, any>) => void;
 }
 
-const MARKET_TYPES: Category[] = [
+const MARKET_TYPES: MarketCategory[] = [
   "Crypto",
   "Meme Coins",
   "Football",

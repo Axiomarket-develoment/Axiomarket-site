@@ -14,17 +14,68 @@ interface Match {
     startTime: string;
 }
 
+interface Player {
+    playerId: number;
+    name: string;
+    image: string;
+    team: string;
+    position?: string;
+    nationality?: string;
+    age?: number;
+}
+
 interface Props {
     match?: Match | null;
     team?: Team | null;
-    mode?: "Match" | "Team";
+    question?: string | null;
+    player?: Player | null;
+    mode?: "Match" | "Team" | "Question" | "Player";
 }
 
 export default function SelectedPreview({
     match,
     team,
+    question,
+    player,
     mode = "Match",
 }: Props) {
+
+    // ================= PLAYER PREVIEW =================
+    if (mode === "Player") {
+        if (!player) return null;
+
+        return (
+            <div className="border border-[#222] bg-[#0A0A0B] rounded-xl p-4 mt-4">
+
+                <div className="flex items-center gap-3">
+
+                    <img
+                        src={player.image}
+                        alt={player.name}
+                        className="w-16 h-16 rounded-full"
+                    />
+
+                    <div>
+
+                        <div className="text-white font-semibold">
+                            {player.name}
+                        </div>
+
+                        <div className="text-sm text-[#8B8B8B]">
+                            {player.team}
+                        </div>
+
+                        <div className="text-xs text-[#666] mt-1">
+                            {player.position}
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        );
+    }
 
     // ================= MATCH PREVIEW =================
     if (mode === "Match" && match) {
@@ -39,6 +90,7 @@ export default function SelectedPreview({
 
                     {/* HOME */}
                     <div className="flex items-center gap-2 w-[42%] justify-end text-right">
+
                         <span className="truncate text-white">
                             {match.homeTeam?.name}
                         </span>
@@ -47,6 +99,7 @@ export default function SelectedPreview({
                             <img
                                 src={match.homeTeam.logo}
                                 className="w-6 h-6 rounded-full flex-shrink-0"
+                                alt={match.homeTeam.name}
                             />
                         )}
                     </div>
@@ -60,10 +113,12 @@ export default function SelectedPreview({
 
                     {/* AWAY */}
                     <div className="flex items-center gap-2 w-[42%]">
+
                         {match.awayTeam?.logo && (
                             <img
                                 src={match.awayTeam.logo}
                                 className="w-6 h-6 rounded-full flex-shrink-0"
+                                alt={match.awayTeam.name}
                             />
                         )}
 
@@ -71,6 +126,7 @@ export default function SelectedPreview({
                             {match.awayTeam?.name}
                         </span>
                     </div>
+
                 </div>
 
                 <div className="flex items-center justify-between mt-3">
@@ -83,7 +139,9 @@ export default function SelectedPreview({
                     <div className="mt-3 text-[11px] text-[#666] text-center">
                         {match.league}
                     </div>
+
                 </div>
+
             </div>
         );
     }
@@ -103,13 +161,33 @@ export default function SelectedPreview({
                         <img
                             src={team.logo}
                             className="w-8 h-8 rounded-full"
+                            alt={team.name}
                         />
                     )}
 
                     <span className="text-white text-sm">
                         {team.name}
                     </span>
+
                 </div>
+
+            </div>
+        );
+    }
+
+    // ================= QUESTION PREVIEW =================
+    if (mode === "Question" && question) {
+        return (
+            <div className="mt-3 p-4 border border-[#222] bg-[#0A0A0B] rounded-xl text-sm text-[#8B8B8B]">
+
+                <div className="text-[#E4E4E4] mb-3 text-xs uppercase tracking-wide">
+                    Selected Question
+                </div>
+
+                <div className="text-white leading-relaxed">
+                    {question}
+                </div>
+
             </div>
         );
     }

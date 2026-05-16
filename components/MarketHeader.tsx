@@ -26,6 +26,7 @@ export function MarketHeader({
     const [bookmarked, setBookmarked] = useState(false);
 
     const isSport = market.marketType === "SPORT";
+    const isX = market.marketType === "X";
 
     // ---------------- FIRESTORE ----------------
     useEffect(() => {
@@ -127,6 +128,15 @@ export function MarketHeader({
                         className="rounded-full"
                     />
                 )}
+                {isX && (
+                    <Image
+                        src={market.metadata?.profileImage}
+                        alt="team A"
+                        width={38}
+                        height={38}
+                        className="rounded-full"
+                    />
+                )}
 
                 {/* CRYPTO LOGO */}
                 {isCrypto && (
@@ -148,12 +158,12 @@ export function MarketHeader({
                 )}
 
                 {/* QUESTION (CENTER) */}
-                <h1 className={`text-sm max-w-52 ${isCrypto ? "text-left" :"text-center"} font-bold flex-1 text-center`}>
+                <h1 className={`text-sm max-w-52 ${isSport ? "text-center" :"text-left"} font-bold flex-1 text-center`}>
                     {market.question}
                 </h1>
 
                 {/* SPORT RIGHT TEAM */}
-                {isSport && (
+                {isSport && market.marketMode ==="FOOTBALL_MATCH" &&(
                     <Image
                         src={market.event?.participantImages?.[1]}
                         alt="team B"

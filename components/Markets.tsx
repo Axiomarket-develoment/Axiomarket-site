@@ -45,6 +45,7 @@ const Markets: React.FC<MarketsProps> = ({
       const res = await apiRequest("/user_market/markets", {
         method: "GET",
         showLoading: false,
+        showError: false
       });
 
       if (res.success && Array.isArray(res.data)) {
@@ -100,6 +101,8 @@ const Markets: React.FC<MarketsProps> = ({
         method: "POST",
         body: { userId },
         showLoading: false,
+        showError: false,
+        showSuccess: false
       });
 
       if (res.success) {
@@ -145,11 +148,11 @@ const Markets: React.FC<MarketsProps> = ({
         activeSubCategory === "All Markets"
           ? true
           : market.question
-              ?.toLowerCase()
-              .includes(activeSubCategory.toLowerCase()) ||
-            market.metadata?.assetSymbol
-              ?.toLowerCase()
-              .includes(activeSubCategory.toLowerCase());
+            ?.toLowerCase()
+            .includes(activeSubCategory.toLowerCase()) ||
+          market.metadata?.assetSymbol
+            ?.toLowerCase()
+            .includes(activeSubCategory.toLowerCase());
 
       const matchesSaved =
         !showSavedOnly || savedMarkets.includes(market._id);
@@ -159,23 +162,56 @@ const Markets: React.FC<MarketsProps> = ({
 
     // 🔥 TRENDING (FIXED - NO RANDOM SHUFFLE)
     if (activeCategory === "Trending") {
-      const grouped: any = {
+      const grouped: Record<string, Market[]> = {
         CRYPTO: [],
         SPORT: [],
         SOCIAL: [],
+        X: [],
+        "MEME COINS": [],
       };
 
       filtered.forEach((m) => {
-        if (grouped[m.marketType]) {
-          grouped[m.marketType].push(m);
+        const type = m.marketType?.toUpperCase();
+
+        if (grouped[type]) {
+          grouped[type].push(m);
         }
       });
 
-      return [
-        ...grouped.CRYPTO.slice(0, 5),
-        ...grouped.SPORT.slice(0, 5),
-        ...grouped.SOCIAL.slice(0, 5),
-      ];
+      // optional sorting inside each category
+      Object.keys(grouped).forEach((key) => {
+        grouped[key].sort((a, b) => {
+          const aEnd = Number(a.endDate || 0);
+          const bEnd = Number(b.endDate || 0);
+
+          if (bEnd !== aEnd) {
+            return bEnd - aEnd;
+          }
+
+          return a._id.localeCompare(b._id);
+        });
+      });
+
+      const mixed: Market[] = [];
+
+      const maxLength = Math.max(
+        grouped.CRYPTO.length,
+        grouped.SPORT.length,
+        grouped.SOCIAL.length,
+        grouped.X.length,
+        grouped["MEME COINS"].length
+      );
+
+      for (let i = 0; i < maxLength; i++) {
+        if (grouped.CRYPTO[i]) mixed.push(grouped.CRYPTO[i]);
+        if (grouped.SPORT[i]) mixed.push(grouped.SPORT[i]);
+        if (grouped.SOCIAL[i]) mixed.push(grouped.SOCIAL[i]);
+        if (grouped.X[i]) mixed.push(grouped.X[i]);
+        if (grouped["MEME COINS"][i]) mixed.push(grouped["MEME COINS"][i]); // ✅ ADD THIS
+
+      }
+
+      return mixed;
     }
 
     // 🔥 NORMAL FILTER
@@ -183,15 +219,22 @@ const Markets: React.FC<MarketsProps> = ({
       .filter((market) => {
         return (
           market.marketType?.toUpperCase() ===
-            activeCategory?.toUpperCase() ||
+          activeCategory?.toUpperCase() ||
           market.category?.toLowerCase() ===
-            activeCategory?.toLowerCase()
+          activeCategory?.toLowerCase()
         );
       })
       .sort((a, b) => {
         const aEnd = Number(a.endDate || 0);
         const bEnd = Number(b.endDate || 0);
-        return bEnd - aEnd;
+
+        // newest first
+        if (bEnd !== aEnd) {
+          return bEnd - aEnd;
+        }
+
+        // stable fallback
+        return a._id.localeCompare(b._id);
       });
   }, [markets, activeCategory, activeSubCategory, showSavedOnly, savedMarkets]);
 
@@ -233,8 +276,8 @@ const Markets: React.FC<MarketsProps> = ({
                     const updated = isNowSaved
                       ? [...(user?.savedMarkets || []), id]
                       : (user?.savedMarkets || []).filter(
-                          (mId: string) => mId !== id
-                        );
+                        (mId: string) => mId !== id
+                      );
 
                     const newUser = {
                       ...user,

@@ -28,8 +28,7 @@ const GoogleButton: React.FC = () => {
         body: { token: accessToken }, // or ID token if you want
       });
 
-      if (res.success && res.data?.token) {
-        localStorage.setItem("token", res.data.token);
+      if (res.success) {
         localStorage.setItem("user", JSON.stringify(res.data.user));
         router.push("/market");
       }

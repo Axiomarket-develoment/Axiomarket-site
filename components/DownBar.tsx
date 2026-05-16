@@ -15,6 +15,7 @@ const DownBar = () => {
     const pathname = usePathname();
     const [clicked, setClicked] = React.useState<string | null>(null);
 
+    
     const downbars: DownBarItem[] = [
         { label: "Market", path: "/market", icon: "/img/downbar/db1.svg" },
         { label: "P2P", path: "/p2p", icon: "/img/downbar/db2.svg" },
@@ -32,9 +33,8 @@ const DownBar = () => {
         // 🔒 Protect History
         if (item.path === "/history") {
             const user = localStorage.getItem("user");
-            const token = localStorage.getItem("token");
 
-            if (!user || !token) {
+            if (!user ) {
                 toast("Please login to continue");
 
                 setTimeout(() => {

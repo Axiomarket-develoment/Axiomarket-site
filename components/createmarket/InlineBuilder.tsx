@@ -1,10 +1,11 @@
 "use client";
 
+import { useEffect } from "react";
 import { SUGGESTIONS } from "@/data/Template";
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { createPortal } from "react-dom";
-import { Template , Field} from "@/data/market";
+import { Template, Field } from "@/data/market";
 
 /* ---------------- TYPES ---------------- */
 
@@ -36,11 +37,16 @@ export default function InlineBuilder({
 }: Props) {
   const [activeToken, setActiveToken] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (template && !activeToken) {
+      setActiveToken(template.fields[0]?.key || null);
+    }
+  }, [template]);
 
 
   if (!template) {
     return (
-      <div className="text-[#8B8B8B] text-xs  rounded-lg">
+      <div className="text-[#8B8B8B] text-sm  rounded-lg">
         Select a template to start building your question...
       </div>
     );
@@ -50,13 +56,18 @@ export default function InlineBuilder({
     (f) => f.key === activeToken
   );
 
-  const getSuggestions = (category: string, fieldKey: string) => {
-    return SUGGESTIONS?.[category]?.[fieldKey] ?? [];
-  };
+  const normalizeCategory = (c: string) =>
+  c.toUpperCase().replace(" ", "_");
+
+ const getSuggestions = (category: string, fieldKey: string) => {
+  return SUGGESTIONS?.[normalizeCategory(category)]?.[fieldKey] ?? [];
+};
+
+
 
   const numberSuggestions =
     currentField?.type === "number"
-      ? [10, 50, 100, 1000, 10000]
+      ? [2, 5, 10, 15, 20]
       : [];
 
   const formatPlaceholder = (key: string) => {
@@ -78,10 +89,10 @@ export default function InlineBuilder({
   const handleReplace = (key: string, value: any) => {
     const raw = normalize(value);
 
-  setValues((prev) => ({
-  ...prev,
-  [key]: raw,
-}));
+    setValues((prev) => ({
+      ...prev,
+      [key]: raw,
+    }));
 
     // if (key === "timePhrase") {
     //   const now = new Date();
@@ -145,7 +156,7 @@ export default function InlineBuilder({
   return (
     <div className="text-white relative ">
       {/* SENTENCE */}
-      <div className="p- py-  text-xs bg-transparent  rounded-lg whitespace-nowrap overflow-x-auto">
+      <div className="p- py-  text-sm bg-transparent  rounded-lg whitespace-nowrap overflow-x-auto">
         {renderSentence()}
       </div>
 
@@ -220,11 +231,11 @@ export default function InlineBuilder({
                   type="number"
                   placeholder="type number"
                   onKeyDown={(e) => {
-                   const val = (e.target as HTMLInputElement).value;
+                    const val = (e.target as HTMLInputElement).value;
 
-if (!val) return;
+                    if (!val) return;
 
-handleReplace(activeToken, Number(val));
+                    handleReplace(activeToken, Number(val));
                   }}
                   className="w-full p-2 py-3 bg-[#222] rounded"
                 />

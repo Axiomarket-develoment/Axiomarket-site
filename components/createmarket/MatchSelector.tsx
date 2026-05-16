@@ -1,38 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { apiRequest } from "@/utils/apiRequest";
+
 import { motion, AnimatePresence } from "framer-motion";
 import { format, isToday, isTomorrow } from "date-fns";
 import { generateQuestions } from "@/utils/generateQuestions";
 
 
 export default function MatchSelector({
+    matches,
     selectedMatch,
     setSelectedMatch,
     setQuestions,
     update,
 }: any) {
 
-    const [matches, setMatches] = useState<any[]>([]);
     const [openMatch, setOpenMatch] = useState(false);
 
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    useEffect(() => {
-        const fetchMatches = async () => {
-            const res = await apiRequest("/user_match/get_matches", {
-                method: "GET",
-                showLoading: false,
-            });
 
-            if (res.success) {
-                setMatches(res.data?.data || []);
-            }
-        };
-
-        fetchMatches();
-    }, []);
 
     const groupedMatches = Object.entries(
         matches.reduce((acc: any, match: any) => {
@@ -78,11 +65,38 @@ export default function MatchSelector({
                 }}
                 className="w-full p-3 text-sm bg-[#0A0A0B] border border-[#1B1B1B] text-white rounded-xl cursor-pointer flex justify-between items-center hover:border-[#2a2a2a] transition"
             >
-                <span>
-                    {selectedMatch
-                        ? `${selectedMatch.homeTeam.name} vs ${selectedMatch.awayTeam.name}`
-                        : "Select match"}
-                </span>
+                <div className="flex items-center gap-2">
+
+                    {selectedMatch ? (
+                        <>
+                            {/* HOME TEAM */}
+                            <img
+                                src={selectedMatch.homeTeam?.logo || "/placeholder.png"}
+                                className="w-5 h-5 rounded-full"
+                                alt={selectedMatch.homeTeam?.name}
+                            />
+
+                            <span className="text-white text-sm truncate max-w-[160px]">
+                                {selectedMatch.homeTeam?.name}
+                            </span>
+
+                            <span className="text-[#555] text-xs mx-1">vs</span>
+
+                            {/* AWAY TEAM */}
+                            <span className="text-white text-sm truncate max-w-[160px]">
+                                {selectedMatch.awayTeam?.name}
+                            </span>
+
+                            <img
+                                src={selectedMatch.awayTeam?.logo || "/placeholder.png"}
+                                className="w-5 h-5 rounded-full"
+                                alt={selectedMatch.awayTeam?.name}
+                            />
+                        </>
+                    ) : (
+                        <span>Select match</span>
+                    )}
+                </div>
 
                 <span className={`text-[#8B8B8B] text-[10px] transition-transform duration-200 ${openMatch ? "rotate-180" : ""}`}>
                     ▼
@@ -98,12 +112,12 @@ export default function MatchSelector({
                         className="absolute w-full mt-2 bg-[#0A0A0B] border border-[#1B1B1B] rounded-xl shadow-lg z-50 max-h-[350px] overflow-y-auto"
                     >
 
-                        {Object.entries(groupedMatches).map(([date, dayMatches]: any) => (
+                        {groupedMatches.map(([date, dayMatches]: any) => (
                             <div key={date}>
 
                                 <div className="px-4 flex items-center py-2 gap-2 text-[11px] font-semibold text-[#666] sticky top-0">
                                     <div className="w-full h-px bg-white/10" />
-                                    <div>{date}</div>
+                                    <div className="text-nowrap">{date}</div>
                                     <div className="w-full h-px bg-white/10" />
                                 </div>
 
@@ -117,10 +131,12 @@ export default function MatchSelector({
 
                                             <div className="flex items-center gap-2 w-[45%]">
                                                 <img
-                                                    src={m.homeTeam.logo || "/placeholder.png"}
+                                                    src={m.homeTeam?.logo || "/placeholder.png"}
                                                     className="w-5 h-5 rounded-full"
                                                 />
-                                                <span className="truncate">{m.homeTeam.name}</span>
+                                                <span className="truncate">
+                                                    {m.homeTeam?.name || "Unknown Team"}
+                                                </span>
                                             </div>
 
                                             <div className="w-[10%] flex justify-center text-[10px] text-[#555]">
@@ -128,9 +144,12 @@ export default function MatchSelector({
                                             </div>
 
                                             <div className="flex items-center gap-2 w-[45%] justify-end">
-                                                <span className="truncate">{m.awayTeam.name}</span>
+                                                <span className="truncate">
+                                                    {m.awayTeam?.name || "Unknown Team"}
+                                                </span>
+
                                                 <img
-                                                    src={m.awayTeam.logo || "/placeholder.png"}
+                                                    src={m.awayTeam?.logo || "/placeholder.png"}
                                                     className="w-5 h-5 rounded-full"
                                                 />
                                             </div>

@@ -1,5 +1,7 @@
 "use client";
 
+import { motion, AnimatePresence } from "framer-motion";
+
 interface Outcome {
     label: string;
 }
@@ -14,49 +16,47 @@ export default function OutcomesSection({
     setOutcomes,
 }: Props) {
 
-    const updateOutcome = (index: number, value: string) => {
+    const handleChange = (index: number, value: string) => {
         const copy = [...outcomes];
         copy[index].label = value;
         setOutcomes(copy);
     };
 
-    const removeOutcome = (index: number) => {
-        setOutcomes(outcomes.filter((_, i) => i !== index));
-    };
-
     return (
         <div className="mt-6">
-            <div className="text-[#E4E4E4] text-sm mb-2">
+
+            <div className="text-[#E4E4E4] text-sm mb-3">
                 Outcomes
             </div>
 
-            <div className="flex w-full gap-2 ">
+            <div className="flex gap-2">
 
-                {outcomes.map((opt, idx) => (
-                    <div
-                        key={idx}
-                        className="flex w-full gap-2 items-center"
-                    >
-                        <input
-                            type="text"
-                            value={opt.label}
-                            placeholder="Outcome label"
-                            onChange={(e) =>
-                                updateOutcome(idx, e.target.value)
-                            }
-                            className="input text-[#8B8B8B] bg-[#0A0A0B] border-[#222] border py-2 px-2 rounded-md w-full"
-                        />
+                <AnimatePresence mode="popLayout">
 
-                        {outcomes.length > 2 && (
-                            <button
-                                onClick={() => removeOutcome(idx)}
-                                className="text-red-400 text-sm"
-                            >
-                                remove
-                            </button>
-                        )}
-                    </div>
-                ))}
+                    {outcomes.map((opt, idx) => (
+                        <motion.div
+                            key={idx}
+                            layout
+                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.9 }}
+                            transition={{ duration: 0.25 }}
+                            className="w-full"
+                        >
+
+                            <input
+                                type="text"
+                                value={opt.label}
+                                onChange={(e) =>
+                                    handleChange(idx, e.target.value)
+                                }
+                                className="w-full text-sm py-2 px-3 rounded-md bg-[#0A0A0B] border border-[#222] text-[#8B8B8B] outline-none focus:border-[#333] transition"
+                            />
+
+                        </motion.div>
+                    ))}
+
+                </AnimatePresence>
 
             </div>
         </div>

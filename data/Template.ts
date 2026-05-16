@@ -2,11 +2,11 @@
 import { Template } from "@/data/market";
 
 type Category =
-  | "Crypto"
-  | "Meme Coins"
-  | "Football"
-//   | "Stocks"
-  | "X"
+    | "Crypto"
+    | "Meme Coins"
+    | "Football"
+    //   | "Stocks"
+    | "X"
 //   | "Politics"
 //   | "Entertainment";
 
@@ -15,7 +15,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
     X: [
         {
             label: "Tweet Count",
-            template: "Will {name} make more than {number} tweets {timePhrase}?",
+            template: "Will {name} make more than {number} tweets in {timePhrase}?",
             fields: [
                 { key: "name", type: "text", placeholder: "@username" },
                 { key: "number", type: "number" },
@@ -35,7 +35,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
 
         {
             label: "Follower Gain",
-            template: "Will {name} gain more than {number} followers {timePhrase}?",
+            template: "Will {name} gain more than {number} followers in {timePhrase}?",
             fields: [
                 { key: "name", type: "text" },
                 { key: "number", type: "number" },
@@ -54,7 +54,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
 
         {
             label: "Viral Tweet",
-            template: "Will {name} get more than {number} likes on a tweet {timePhrase}?",
+            template: "Will {name} get more than {number} likes on a tweet in {timePhrase}?",
             fields: [
                 { key: "name", type: "text" },
                 { key: "number", type: "number" },
@@ -72,7 +72,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
 
         {
             label: "Post Activity",
-            template: "Will {name} post {timePhrase}?",
+            template: "Will {name} post in {timePhrase}?",
             fields: [
                 { key: "name", type: "text" },
                 {
@@ -89,7 +89,7 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
 
         {
             label: "Reply Count",
-            template: "Will {name} make more than {number} replies {timePhrase}?",
+            template: "Will {name} make more than {number} replies in {timePhrase}?",
             fields: [
                 { key: "name", type: "text" },
                 { key: "number", type: "number" },
@@ -103,104 +103,154 @@ export const TEMPLATES: Partial<Record<Category, Template[]>> = {
                     ]
                 }
             ]
+        },
+        {
+            label: "Engagement Spike",
+            template: "Will {name} get more than {number} total engagements on a tweet in {timePhrase}?",
+            fields: [
+                { key: "name", type: "text", placeholder: "@username" },
+                { key: "number", type: "number" },
+                {
+                    key: "timePhrase",
+                    type: "select",
+                    options: [
+                        { label: "In 1 Hour", value: "1h" },
+                        { label: "In 24 Hours", value: "24h" },
+                        { label: "In 7 Days", value: "7d" }
+                    ]
+                }
+            ]
+        },
+        {
+            label: "Viral Thread",
+            template: "Will {name} post a thread that gets more than {number} likes {timePhrase}?",
+            fields: [
+                { key: "name", type: "text" },
+                { key: "number", type: "number" },
+                {
+                    key: "timePhrase",
+                    type: "select",
+                    options: [
+                        { label: "In 24 Hours", value: "24h" },
+                        { label: "In 7 Days", value: "7d" }
+                    ]
+                }
+            ]
+        },
+        {
+            label: "Verification Status",
+            template: "Will {name} get verified on X in {timePhrase}?",
+            fields: [
+                { key: "name", type: "text" },
+                {
+                    key: "timePhrase",
+                    type: "select",
+                    options: [
+                        { label: "In 7 Days", value: "7d" },
+                        { label: "In 30 Days", value: "30d" },
+                        { label: "This Month", value: "month" }
+                    ]
+                }
+            ]
         }
     ],
 
     Crypto: [
         {
             label: "Price Above",
-            template: "Will {token} be above ${price} {timePhrase}?",
+
+            template:
+                "Will {assetSymbol} be above ${target} in {duration}?",
+
             fields: [
-                { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-                { key: "price", type: "number" },
                 {
-                    key: "timePhrase",
+                    key: "assetSymbol",
+                    type: "text",
+                },
+
+                {
+                    key: "target",
+                    type: "number",
+                },
+
+                {
+                    key: "duration",
                     type: "select",
+
                     options: [
-                        { label: "In 1 Hour", value: "1h" },
-                        { label: "In 24 Hours", value: "24h" },
-                        { label: "In 7 Days", value: "7d" },
-                        { label: "Tomorrow", value: "tomorrow" }
-                    ]
-                }
-            ]
+                        "1 hour",
+                        "24 hours",
+                        "7 days",
+                        "30 days",
+                    ],
+                },
+            ],
         },
 
         {
             label: "Price Below",
-            template: "Will {token} fall below ${price} {timePhrase}?",
+
+            template:
+                "Will {assetSymbol} fall below ${target} in {duration}?",
+
             fields: [
-                { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-                { key: "price", type: "number" },
                 {
-                    key: "timePhrase",
+                    key: "assetSymbol",
+                    type: "text",
+                },
+
+                {
+                    key: "target",
+                    type: "number",
+                },
+
+                {
+                    key: "duration",
                     type: "select",
+
                     options: [
-                        { label: "In 1 Hour", value: "1h" },
-                        { label: "In 24 Hours", value: "24h" },
-                        { label: "In 7 Days", value: "7d" }
-                    ]
-                }
-            ]
+                        "1 hour",
+                        "24 hours",
+                        "7 days",
+                    ],
+                },
+            ],
         },
+    ],
 
+    "Meme Coins": [
         {
-            label: "Price Range",
-            template: "Will {token} stay between ${low} and ${high} {timePhrase}?",
+            label: "Meme Pump",
+
+            template:
+                "Will {assetSymbol} pump above ${target} in {duration}?",
+
             fields: [
-                { key: "token", type: "select", options: ["BTC", "ETH"] },
-                { key: "low", type: "number" },
-                { key: "high", type: "number" },
                 {
-                    key: "timePhrase",
+                    key: "assetSymbol",
+                    type: "text",
+                },
+
+                {
+                    key: "target",
+                    type: "number",
+                },
+
+                {
+                    key: "duration",
                     type: "select",
+
                     options: [
-                        { label: "In 1 Hour", value: "1h" },
-                        { label: "In 24 Hours", value: "24h" },
-                        { label: "In 7 Days", value: "7d" }
-                    ]
-                }
-            ]
+                        "1 hour",
+                        "24 hours",
+                        "7 days",
+                    ],
+                },
+            ],
         },
+    ],
 
-        {
-            label: "Percentage Move",
-            template: "Will {token} move more than {percent}% {timePhrase}?",
-            fields: [
-                { key: "token", type: "select", options: ["BTC", "ETH", "SOL"] },
-                { key: "percent", type: "number" },
-                {
-                    key: "timePhrase",
-                    type: "select",
-                    options: [
-                        { label: "In 1 Hour", value: "1h" },
-                        { label: "In 24 Hours", value: "24h" },
-                        { label: "In 7 Days", value: "7d" }
-                    ]
-                }
-            ]
-        },
 
-        {
-            label: "ATH Break",
-            template: "Will {token} break its all-time high {timePhrase}?",
-            fields: [
-                { key: "token", type: "select", options: ["BTC", "ETH"] },
-                {
-                    key: "timePhrase",
-                    type: "select",
-                    options: [
-                        { label: "In 1 Hour", value: "1h" },
-                        { label: "In 24 Hours", value: "24h" },
-                        { label: "In 7 Days", value: "7d" }
-                    ]
-                }
-            ]
-        }
-    ]
-    ,
-
-  
 };
 
 export const SUGGESTIONS: Record<string, any> = {

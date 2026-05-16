@@ -12,6 +12,7 @@ import { FaPlus } from "react-icons/fa";
 
 import { GoPlus } from "react-icons/go";
 import CreateMarket from "./createmarket/CreateMarket";
+import { Shield } from "lucide-react";
 
 
 const MobileNav = () => {
@@ -19,15 +20,18 @@ const MobileNav = () => {
   const router = useRouter();
   const isMarketPage = pathname === "/market/";
 
-  const token =
-    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  // const isAdmin = true;
 
   const userStr =
     typeof window !== "undefined" ? localStorage.getItem("user") : null;
 
   const [mounted, setMounted] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(!!token && !!userStr);
+  const [isLoggedIn, setIsLoggedIn] = useState(!!userStr);
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const [isAdmin, setIsAdmin] = useState(false);
+
+
   const [user, setUser] = useState<any>(null);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showComingSoon, setShowComingSoon] = useState(false);
@@ -44,9 +48,8 @@ const MobileNav = () => {
     setMounted(true);
 
     const userStr = localStorage.getItem("user");
-    const token = localStorage.getItem("token");
 
-    if (!userStr || !token) {
+    if (!userStr) {
       setIsLoggedIn(false);
       return;
     }
@@ -61,6 +64,31 @@ const MobileNav = () => {
       setIsLoggedIn(false);
     }
   }, []);
+
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const res = await fetch(`${API_URL}/user_auth/me`, {
+          method: "GET",
+          credentials: "include",
+        });
+
+        const data = await res.json();
+
+        if (data?.success && data?.user) {
+          setIsAdmin(!!data.user.isAdmin);
+        } else {
+          setIsAdmin(false);
+        }
+      } catch (err) {
+        console.log("Me fetch error:", err);
+        setIsAdmin(false);
+      }
+    };
+
+    fetchMe();
+  }, []);
+
 
   // =========================
   // LOCAL STORAGE SYNC
@@ -87,7 +115,9 @@ const MobileNav = () => {
     // console.log("🔌 Connecting socket...");
 
     const socket = io(API_URL, {
-      transports: ["websocket"],
+      transports: ["polling", "websocket"],
+      reconnection: true,
+      timeout: 20000,
     });
 
     socketRef.current = socket;
@@ -108,6 +138,8 @@ const MobileNav = () => {
 
         const updatedUser = {
           ...prev,
+
+
 
           // ✅ IMPORTANT: update nested balance object
           balance: {
@@ -167,10 +199,7 @@ const MobileNav = () => {
       <CreateMarket
         open={showCreateMarket}
         onClose={() => setShowCreateMarket(false)}
-        onSubmit={() => {
-          setShowCreateMarket(false);
-          setShowComingSoon(true);
-        }}
+
       />
       <div className="flex justify-between items-center w-full p-3 lg:px-30">
 
@@ -197,6 +226,19 @@ const MobileNav = () => {
         {/* RIGHT */}
         <div className="flex items-center gap-1">
 
+          {isAdmin && (
+            <div
+              onClick={() => router.push("/admin")}
+              className="h-6 w-6 flex justify-center items-center rounded-full cursor-pointer hover:scale-105 transition mr-2"
+              style={{
+                border: "1px solid transparent",
+                background:
+                  "linear-gradient(#0D0D0D, #0D0D0D) padding-box, linear-gradient(90deg, rgba(255,255,255,0.5), #262626, #000000) border-box",
+              }}
+            >
+              <Shield className="text-white/30 text-base" />
+            </div>
+          )}
 
 
           <div

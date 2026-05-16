@@ -94,7 +94,6 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
 
         setShowWave(true);
 
-        const token = localStorage.getItem("token") || "";
 
         if (!amount || amount <= 0) {
             toast.error("Enter a valid amount");
@@ -129,7 +128,6 @@ const TriggerOrderModal: React.FC<Props> = ({ onClose, market, logo, outcome, od
             const response = await apiRequest("/user_market/user_enter_market", {
                 method: "POST",
                 body: {
-                    token,
                     marketId: market._id,
                     subMarketId: market.subMarkets?.[0]?._id,
                     outcome,

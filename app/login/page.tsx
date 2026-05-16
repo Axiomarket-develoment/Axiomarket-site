@@ -33,8 +33,7 @@ const Page: React.FC = () => {
       showSuccess: true,
     });
 
-    if (res.success && res.data?.token && res.data.user) {
-      localStorage.setItem("token", res.data.token);
+    if (res.success &&  res.data.user) {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       router.push("/market");
     }
@@ -60,8 +59,7 @@ const Page: React.FC = () => {
       showSuccess: true,
     });
 
-    if (res.success && res.data?.token && res.data.user) {
-      localStorage.setItem("token", res.data.token);
+    if (res.success  && res.data.user) {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       router.push("/market");
     }

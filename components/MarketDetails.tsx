@@ -56,11 +56,12 @@ function convertInterval(interval: string) {
 export default function MarketDetails({ market, logo }: any) {
     const isSport = market.marketType === "SPORT";
     const isCrypto = market.marketType === "CRYPTO";
+    const isX = market.marketType === "X" || market.marketType === "SOCIAL";
 
     // ✅ SMART DEFAULT TAB
     const defaultTab: Tab = isCrypto
         ? "Chart"
-        : isSport
+        : isSport || isX
             ? "Chat"
             : "Chart";
 
@@ -94,6 +95,8 @@ export default function MarketDetails({ market, logo }: any) {
         (acc: number, sub: any) => acc + sub.totalVolume,
         0
     );
+
+    console.log(market)
 
     const singleSub =
         market.subMarkets.length === 1 &&
@@ -155,7 +158,7 @@ export default function MarketDetails({ market, logo }: any) {
                     {/* TABS (NO STYLE CHANGE) */}
                     <Tabs
                         activeTab={activeTab}
-                        hideChart={isSport}
+                        hideChart={isSport || isX}
                         onChange={setActiveTab}
                     />
 

@@ -12,6 +12,8 @@ import { FaBookmark, FaRegBookmark } from "react-icons/fa";
 
 import { useRouter } from "next/navigation";
 import SuccessScreen from "./SuccessScreen";
+import { isBoxedPrimitive } from "util/types";
+import ConfirmSettleOutcome from "./ConfirmSettleOutcome";
 
 
 type Props = {
@@ -19,6 +21,7 @@ type Props = {
     userOrders: any[];
     initialSaved?: boolean;
     onToggleSaved?: (marketId: string, isSaved: boolean) => void;
+    mode?: "user" | "admin";
 };
 
 type Outcome = {
@@ -54,41 +57,74 @@ type MarketOption = {
 
 
 const getTimeLeft = (endDate: string, status?: string) => {
-  if (status === "SETTLED") return "Settled";
+    if (status === "SETTLED") return "Settled";
 
-  const now = new Date().getTime();
-  const end = new Date(endDate).getTime();
+    const now = new Date().getTime();
+    const end = new Date(endDate).getTime();
 
-  const diff = end - now;
+    const diff = end - now;
 
-  if (diff <= 0) return "Ended";
+    if (diff <= 0) return "Ended";
 
-  const hours = Math.floor(diff / (1000 * 60 * 60));
-  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-  const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+    const months = Math.floor(diff / (1000 * 60 * 60 * 24 * 30));
+    const days = Math.floor(
+        (diff % (1000 * 60 * 60 * 24 * 30)) /
+        (1000 * 60 * 60 * 24)
+    );
 
-  // ✅ dynamic formatting
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
-  }
+    const hours = Math.floor(
+        (diff % (1000 * 60 * 60 * 24)) /
+        (1000 * 60 * 60)
+    );
 
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  }
+    const minutes = Math.floor(
+        (diff % (1000 * 60 * 60)) /
+        (1000 * 60)
+    );
 
-  return `${seconds}s`;
+    const seconds = Math.floor(
+        (diff % (1000 * 60)) / 1000
+    );
+
+    // ✅ Months
+    if (months > 0) {
+        return `${months}mo ${days}d`;
+    }
+
+    // ✅ Days
+    if (days > 0) {
+        return `${days}d ${hours}h`;
+    }
+
+    // ✅ Hours
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    }
+
+    // ✅ Minutes
+    if (minutes > 0) {
+        return `${minutes}m ${seconds}s`;
+    }
+
+    // ✅ Seconds
+    return `${seconds}s`;
 };
 
-const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initialSaved = false }) => {
+const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initialSaved = false, mode = "user" }) => {
     const [modalOpen, setModalOpen] = useState(false);
 
     // Keep all your original states
     const isSport = market.marketType === "SPORT";
     const isCrypto = market.marketType === "CRYPTO";
+    const isMemes = market.marketType === "MEME COINS";
+    const isX = market.marketType === "X";
 
     const [timeLeft, setTimeLeft] = useState(
         getTimeLeft(market.endDate, market.status)
     );
+
+    const [showSettleModal, setShowSettleModal] = useState(false);
+
     const [logo, setLogo] = useState<string | null>(null);
     const [selectedOutcome, setSelectedOutcome] = useState<string | null>(null);
     const [selectedOdds, setSelectedOdds] = useState<number | null>(null);
@@ -143,7 +179,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
     };
 
     useEffect(() => {
-        if (!isCrypto || !market.metadata?.asset) return;
+        if ((!isCrypto && !isMemes) || !market.metadata?.asset) return;
 
         const coinIdRaw = market.metadata.asset;
         const coinId = coinIdRaw.toLowerCase() === "avalanche" ? "avalanche-2" : coinIdRaw.toLowerCase();
@@ -220,15 +256,19 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
         e.stopPropagation();
 
         // 🔒 Check if user is logged in
-        const token = localStorage.getItem("token");
         const user = localStorage.getItem("user");
 
-        if (!token || !user) {
+        if (!user) {
             // Not logged in → redirect to /login
             router.push("/login");
             return;
         }
-
+        // ✅ ADMIN MODE
+        if (mode === "admin") {
+            setSelectedOutcome(outcome); // 🔥 FIX HERE
+            setShowSettleModal(true);
+            return;
+        }
         // Check if market ended
         if (getTimeLeft(market.endDate) === "Ended") {
             if (typeof window !== "undefined") {
@@ -285,18 +325,27 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                     isOpen={showSuccess}
                 />
             )}
+
+            {showSettleModal && (
+                <ConfirmSettleOutcome
+                    market={market}
+                    outcome={selectedOutcome}
+                    onClose={() => setShowSettleModal(false)}
+                />
+            )}
             <div className="relative bg-[#0C0C0C] text-white rounded-2xl p-3 overflow-hidden">
                 {/* Wrap only the clickable area (excluding buttons) */}
                 {/* <Link href={`/market/${market.id}`}>
                     <div className="absolute inset-0 z-0" />
                 </Link> */}
+
                 <div className="flex items-center  gap-2">
 
                     {/* SPORT LOGOS */}
-                    {isSport && market.event?.participantImages && (
+                    {isSport && market.event?.participantImages && (market.marketMode === "FOOTBALL_OUTCOME" || market.marketMode === "FOOTBALL_MATCH") && (
                         <div
-                        onClick={handleMarketClick}
-                        className="flex items-center justify-between w-full mb-6 ">
+                            onClick={handleMarketClick}
+                            className="flex items-center justify-between w-full mb-6 ">
 
                             {/* LEFT TEAM */}
                             <div className="flex  font-bold items-center ">
@@ -307,7 +356,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                                     height={60}
                                     className="w-10 h-10rounded-full object-cover"
                                 />
-                                <p className="text-[10px] max-w-16 mt-1 mx-2 text-center">
+                                <p className="text-[12px] max-w-16 mt-1 mx-2 text-center">
                                     {market.event.participants?.[0]}
                                 </p>
                             </div>
@@ -319,7 +368,7 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
 
                             {/* RIGHT TEAM */}
                             <div className="flex  items-center">
-                                <p className="text-[10px] max-w-16 mx-2 font-bold mt-1 text-center">
+                                <p className="text-[12px] max-w-16 mx-2 font-bold mt-1 text-center">
                                     {market.event.participants?.[1]}
                                 </p>
                                 <Image
@@ -334,6 +383,32 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                         </div>
                     )}
 
+                    {(
+                        market.marketMode === "FOOTBALL_TEAM" ||
+                        market.marketMode === "FOOTBALL_PLAYER"
+                    ) && (
+                            <div
+                                onClick={handleMarketClick}
+                                className="flex items-center justify-between w-full  my-2"
+                            >
+
+                                {/* LEFT TEAM */}
+                                <div className="flex gap-2 font-bold items-center">
+                                    <Image
+                                        src={market.event?.participantImages?.[0] || ""}
+                                        alt=""
+                                        width={60}
+                                        height={60}
+                                        className="w-10 h-10 rounded-full object-cover"
+                                    />
+
+                                    <h2 className="text-sm  font-semibold  relative z-10">
+                                        {market.question}
+                                    </h2>
+                                </div>
+
+                            </div>
+                        )}
                     {/* CRYPTO LOGO */}
                     {isCrypto && (
                         <div className="relative mb-2 w-10 h-10 rounded-full overflow-hidden">
@@ -352,18 +427,62 @@ const MarketItem: React.FC<Props> = ({ market, userOrders, onToggleSaved, initia
                             />
                         </div>
                     )}
+                    {isMemes && (
+                        <div className="relative mb-2 w-10 h-10 rounded-full overflow-hidden">
+                            {/* Skeleton / Loading placeholder */}
+                            {imgLoading && (
+                                <div className="absolute inset-0 bg-gray-800 animate-pulse" />
+                            )}
+
+                            <Image
+                                src={logo || "/img/logo2.svg"} // fallback if logo not yet fetched
+                                alt="logo"
+                                width={40}
+                                height={40}
+                                className={`w-10 h-10  rounded-full object-cover`}
+                                onLoadingComplete={() => setImgLoading(false)} // hide skeleton when loaded
+                            />
+                        </div>
+                    )}
+
 
                     {/* QUESTION */}
-                    {!isSport && (
+                    {!isSport && !isX && (
                         <div onClick={handleMarketClick}>
 
-                            <h2 className="text-sm font-semibold mb-3 relative z-10">
+                            <h2 className="text-sm  font-semibold mb-2 relative z-10">
                                 {market.question}
                             </h2>
                         </div>
 
                     )}
                 </div>
+                {isSport && (market.marketMode === "FOOTBALL_OUTCOME" || market.marketMode === "FOOTBALL_MATCH") && (
+                    <div className="text-ce" onClick={handleMarketClick}>
+
+                        <h2 className="text-sm font-semibold -mt-5 mb-3 relative z-10">
+                            {market.question}
+                        </h2>
+                    </div>
+
+                )}
+                {isX && (
+                    <div className="text-ce gap-3 mb-2 flex items-center" onClick={handleMarketClick}>
+                        <Image
+                            src={market.metadata?.profileImage || "/img/logo2.svg"} // fallback if logo not yet fetched
+                            alt="logo"
+                            width={40}
+                            height={40}
+                            className={`w-10    h-10  rounded-full object-cover`}
+                            onLoadingComplete={() => setImgLoading(false)} // hide skeleton when loaded
+                        />
+
+                        <h2 className="text-sm font-semibold  relative z-10">
+                            {market.question}
+                        </h2>
+                    </div>
+
+                )}
 
                 {/* SUB MARKETS */}
                 <div className="space-y-3 relative z-10">

@@ -22,13 +22,13 @@ const CategoriesFilter: React.FC<Props> = ({
     setShowSavedOnly,
 }) => {
 
-    const filter1 = ["Trending", "Crypto", "Meme Coins", "Sports", "Stocks", "X", "Politics", "Entertainment"];
+    const filter1 = ["Trending", "Crypto", "Meme Coins", "Sport", "Stocks", "X", "Politics", "Entertainment"];
 
     const filterMap: Record<string, string[]> = {
         Trending: ["All Markets", "$AVAX", "$BTC", "$ETH", "Chelsea", "Oil", "Trump", "Tesla", "Apple"],
         Crypto: ["All Markets", "$AVAX", "$BTC", "$ETH", "$SOL", "$BNB", "$SUI"],
         "Meme Coins": ["All Markets", "$DOGE", "$SHIB"],
-        Sports: ["All Markets", "Man Utd", "Real Madrid", "Barcelona", "Chelsea", "Bayern Munich", "Juventus", "Inter Milan", "Napoli", "Liverpool"],
+        Sport: ["All Markets", "Man Utd", "Real Madrid", "Barcelona", "Chelsea", "Bayern Munich", "Juventus", "Inter Milan", "Napoli", "Liverpool"],
         Stocks: ["All Markets", "MTN", "GTBank", "Dangote Cement", "BUA Foods", "Apple", "Microsoft", "Alphabet", "Tesla", "Meta"],
         X: ["All Markets", "Ronaldo", " Fabrizio Romano", "United Stand"],
         Webx: ["All Markets", "Xeus", "Papa Kyenn", " Maliel", "Sensei", "Wale Moca"],

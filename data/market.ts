@@ -1,8 +1,14 @@
-export type MarketType = "CRYPTO" | "SOCIAL" | "SPORT";
+export type MarketType = "CRYPTO" | "SOCIAL" | "SPORT" | "X" | "MEME COINS";
 export type MarketStatus = "PENDING" | "LIVE" | "ENDED" | "SETTLED";
 
 
 export type FieldType = "text" | "number" | "select" | "time";
+
+export type MarketCategory =
+  | "Crypto"
+  | "Meme Coins"
+  | "Football"
+  | "X";
 
 export interface Field {
   key: string;
@@ -60,6 +66,9 @@ export interface Metadata {
   startPrice?: number;
   targetPrice?: number;
   assetSymbol: string;
+  profileImage?: string;
+  
+
   direction?: string;
   assetLogo?: string;   // 👈 ADD THIS
   chartImage?: string;  // 👈 ADD THIS
@@ -79,6 +88,7 @@ export interface Market {
   conversationId: string;
   event?: Event;
   metadata?: Metadata;
+  marketMode?: string;
   totalVolume?: number;
   tradeCount?: number;
   featured?: boolean;

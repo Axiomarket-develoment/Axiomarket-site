@@ -7,6 +7,8 @@ interface Props {
     selectedQuestion: string | null;
     setSelectedQuestion: (q: string) => void;
     update: (key: string, value: any) => void;
+    setOpenQuestions?: (v: boolean) => void;
+
 }
 
 export default function QuestionList({
@@ -14,13 +16,18 @@ export default function QuestionList({
     selectedQuestion,
     setSelectedQuestion,
     update,
+    setOpenQuestions
 }: Props) {
 
-    const selectQuestion = (q: string) => {
-        setSelectedQuestion(q);
-        update("question", q);
-        toast.success("Question selected");
-    };
+const selectQuestion = (q: string) => {
+    setSelectedQuestion(q);
+
+    update("question", q);
+
+    setOpenQuestions?.(false);
+
+    toast.success("Question selected");
+};
 
     return (
         <div className="mt-4">

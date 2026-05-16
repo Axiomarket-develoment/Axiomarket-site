@@ -10,7 +10,7 @@ export default function StyleSelector({
 
     const [openStyle, setOpenStyle] = useState(false);
 
-    const styles = ["Match", "Team", "Player"];
+    const styles = ["Match", "Outcome", "Team", "Player"];
 
     return (
         <div className="mb-3 relative">
@@ -43,6 +43,7 @@ export default function StyleSelector({
                             <div
                                 key={s}
                                 onClick={() => {
+                                    console.log("clicked:", s);
                                     setStyle(s);
                                     setOpenStyle(false);
                                 }}
